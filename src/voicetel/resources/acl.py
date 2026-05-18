@@ -1,33 +1,36 @@
 from __future__ import annotations
 
-from typing import Any
-
-from ..models import AclModifyRequest
+from ..models import AclAddData, AclListData, AclModifyRequest, AclRemoveData
 from ._base import AsyncResource, Resource, unwrap
 
 
 class AclResource(Resource):
     """IP-based access control list."""
 
-    def list(self) -> Any:
-        """GET /v2.2/acl — list current CIDR entries."""
-        return unwrap(self._t.request("GET", "/v2.2/acl"))
+    def list(self) -> AclListData:
+        return AclListData.model_validate(unwrap(self._t.request("GET", "/v2.2/acl")))
 
-    def add(self, body: AclModifyRequest) -> Any:
-        """POST /v2.2/acl — add CIDR entries."""
-        return unwrap(self._t.request("POST", "/v2.2/acl", json=body.to_payload()))
+    def add(self, body: AclModifyRequest) -> AclAddData:
+        return AclAddData.model_validate(
+            unwrap(self._t.request("POST", "/v2.2/acl", json=body.to_payload()))
+        )
 
-    def remove(self, body: AclModifyRequest) -> Any:
-        """DELETE /v2.2/acl — remove CIDR entries."""
-        return unwrap(self._t.request("DELETE", "/v2.2/acl", json=body.to_payload()))
+    def remove(self, body: AclModifyRequest) -> AclRemoveData:
+        return AclRemoveData.model_validate(
+            unwrap(self._t.request("DELETE", "/v2.2/acl", json=body.to_payload()))
+        )
 
 
 class AclAsyncResource(AsyncResource):
-    async def list(self) -> Any:
-        return unwrap(await self._t.request("GET", "/v2.2/acl"))
+    async def list(self) -> AclListData:
+        return AclListData.model_validate(unwrap(await self._t.request("GET", "/v2.2/acl")))
 
-    async def add(self, body: AclModifyRequest) -> Any:
-        return unwrap(await self._t.request("POST", "/v2.2/acl", json=body.to_payload()))
+    async def add(self, body: AclModifyRequest) -> AclAddData:
+        return AclAddData.model_validate(
+            unwrap(await self._t.request("POST", "/v2.2/acl", json=body.to_payload()))
+        )
 
-    async def remove(self, body: AclModifyRequest) -> Any:
-        return unwrap(await self._t.request("DELETE", "/v2.2/acl", json=body.to_payload()))
+    async def remove(self, body: AclModifyRequest) -> AclRemoveData:
+        return AclRemoveData.model_validate(
+            unwrap(await self._t.request("DELETE", "/v2.2/acl", json=body.to_payload()))
+        )

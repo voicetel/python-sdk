@@ -247,13 +247,17 @@ def test_client_login_then_request(mock_router: respx.Router) -> None:
         return_value=httpx.Response(200, json={"status": "success", "data": {"apikey": "abcd"}})
     )
     mock_router.get("/v2.2/account").mock(
-        return_value=httpx.Response(200, json={"status": "success", "data": {"me": 1}})
+        return_value=httpx.Response(
+            200, json={"status": "success", "data": {"username": "1234567890", "name": "Me"}}
+        )
     )
     with Client(api_key=None, base_url=BASE, max_retries=0) as c:
         key = c.login(1234567890, "pw")
         assert key == "abcd"
         assert c.api_key == "abcd"
-        assert c.account.get() == {"me": 1}
+        me = c.account.get()
+        assert me.username == "1234567890"
+        assert me.name == "Me"
 
 
 def test_client_login_with_bad_response_raises(mock_router: respx.Router) -> None:

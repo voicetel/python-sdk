@@ -4,17 +4,17 @@ build-backend = "hatchling.build"
 
 [project]
 name = "voicetel-api"
-version = "2.2.6"
+version = "2.2.8"
 description = "Official Python SDK for the VoiceTel REST API"
 readme = "README.md"
-license = "Apache-2.0"
+license = "MIT"
 requires-python = ">=3.10"
 authors = [{ name = "VoiceTel", email = "support@voicetel.com" }]
 keywords = ["voicetel", "telephony", "sip", "sms", "e911", "voip"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: Apache Software License",
+    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
@@ -74,7 +74,7 @@ show_missing = true
 skip_covered = false
 
 [tool.ruff]
-line-length = 100
+line-length = 110
 target-version = "py310"
 
 [tool.ruff.lint]

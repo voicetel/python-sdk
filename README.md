@@ -1,6 +1,6 @@
 # 📞 VoiceTel Python SDK
 
-The official Python client for the [VoiceTel REST API](https://api.voicetel.com) — provision numbers, place orders, validate e911, send messages, and manage your account, all with type-safe, async-ready Python.
+The official Python client for the [VoiceTel REST API](https://voicetel.com/docs/api/v2.2/) — provision numbers, place orders, validate e911, send messages, and manage your account, all with type-safe, async-ready Python.
 
 ![Version](https://img.shields.io/badge/version-2.2.8-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
@@ -105,6 +105,8 @@ with Client(api_key="32hex...") as c:
 Every endpoint requires `Authorization: Bearer <apikey>` **except** `POST /v2.2/account/api-key`, which exchanges username + password for a fresh key. `Client.login()` (and `AsyncClient.login()`) handles the exchange and installs the returned key on the transport.
 
 Re-fetch the API key after any password change — the old one is invalidated.
+
+> Don't have credentials yet? Get them at **[voicetel.com/docs/api/v2.2/credentials](https://voicetel.com/docs/api/v2.2/credentials/)**.
 
 ```python
 from voicetel import Client
@@ -241,8 +243,9 @@ twine check dist/*
 
 ## 📖 API Documentation
 
-- **Live OpenAPI spec:** [https://api.voicetel.com/doc/v2.2.json](https://api.voicetel.com/doc/v2.2.json)
-- **Generated docs site:** [https://api.voicetel.com/doc/](https://api.voicetel.com/doc/)
+- **Reference docs:** [voicetel.com/docs/api/v2.2/](https://voicetel.com/docs/api/v2.2/)
+- **Interactive playground:** [voicetel.com/docs/api/v2.2/playground/](https://voicetel.com/docs/api/v2.2/playground/) — try the API in your browser without writing any code
+- **API credentials:** [voicetel.com/docs/api/v2.2/credentials/](https://voicetel.com/docs/api/v2.2/credentials/)
 - **Type definitions:** see the `voicetel.models` module — every wire shape has a Pydantic model.
 
 ## 🙌 Contributors

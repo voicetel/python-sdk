@@ -46,7 +46,7 @@ class NumberFaxRequest(_Base):
 class NumberForwardRequest(_Base):
     """PUT /v2.2/numbers/{number}/forward."""
 
-    destination: int = Field(description="10-digit destination number.")
+    destination: PhoneNumber = Field(description="10-digit destination number.")
 
 
 class NumberTranslationRequest(_Base):

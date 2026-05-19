@@ -748,7 +748,7 @@ def test_numbers_with_typed_bodies(client: Client, mock_router: respx.Router) ->
     fs = client.numbers.set_fax("2015550123", NumberFaxRequest(email="f@x.com"))
     assert fs.email == "f@x.com"
 
-    fwd = client.numbers.set_forward("2015550123", NumberForwardRequest(destination=2125550123))
+    fwd = client.numbers.set_forward("2015550123", NumberForwardRequest(destination="2125550123"))
     assert fwd.forwardTo == "2125550123"
 
     sg = client.numbers.get_sms("2015550123")
@@ -1373,7 +1373,7 @@ async def test_async_full_resource_surface(mock_router: respx.Router) -> None:
         await c.numbers.set_fax("2015550123", NumberFaxRequest(email="f@x.com"))
         await c.numbers.remove_fax("2015550123")
         await c.numbers.set_forward(
-            "2015550123", NumberForwardRequest(destination=2125550123)
+            "2015550123", NumberForwardRequest(destination="2125550123")
         )
         await c.numbers.remove_forward("2015550123")
         await c.numbers.get_sms("2015550123")

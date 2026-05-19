@@ -40,13 +40,13 @@ def test_to_payload_excludes_unset_optional_fields() -> None:
     assert payload == {"username": 1234567890, "name": "Acme", "email": "x@y.com"}
 
 
-# ----------------------------------------- v2.2.8 wire-field name updates ---
+# ---------------------------------------- wire-field name conventions ---
 
 
 def test_message_send_request_uses_from_number_and_to_number() -> None:
-    """v2.2.8 renamed `from` -> `fromNumber` and `to` -> `toNumber` in the spec.
+    """``from``/``to`` are reserved-word collisions; the spec uses ``fromNumber``/``toNumber``.
 
-    The old `from` keyword collision is gone. Our model uses the new field names directly.
+    Our model uses those field names directly — no Pydantic alias needed.
     """
     msg = MessageSendRequest(fromNumber="2012548000", toNumber="2015551234", text="hi")
     payload = msg.to_payload()
@@ -55,7 +55,8 @@ def test_message_send_request_uses_from_number_and_to_number() -> None:
 
 
 def test_lidb_request_is_correctly_spelled() -> None:
-    """LIDB was misspelled as `Libd` in v2.2.6; v2.2.8 corrected it to `Lidb`."""
+    """LIDB = Line Information Database — verify the spelling is `Lidb` (the operationId
+    and schema name; earlier spec drafts had the typo `Libd`)."""
     req = NumberLidbRequest(cnam="ACME CORP")
     assert req.to_payload() == {"cnam": "ACME CORP"}
 

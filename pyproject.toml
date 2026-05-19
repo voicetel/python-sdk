@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "voicetel-api"
-version = "2.2.8"
+version = "2.2.10"
 description = "Official Python SDK for the VoiceTel REST API"
 readme = "README.md"
 license = "MIT"

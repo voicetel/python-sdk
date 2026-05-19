@@ -1,4 +1,4 @@
-"""Resource-method tests against v2.2.8 typed response models.
+"""Resource-method tests against v2.2.10 typed response models.
 
 Each test:
 1. Mocks the live endpoint with a payload that the response model can validate.
@@ -896,7 +896,9 @@ def test_inumbering_full_surface(client: Client, mock_router: respx.Router) -> N
                 {
                     "number": "2017301000",
                     "portable": True,
-                    "losingCarrier": "ACME",
+                    "losingCarrier": "Sinch Voice-NSR-10X-Port/1",
+                    "localRoutingNumber": "6463071993",
+                    "rateCenterTier": "0",
                     "reason": None,
                 }
             ),
@@ -933,6 +935,9 @@ def test_inumbering_full_surface(client: Client, mock_router: respx.Router) -> N
     assert submitted.pid == "a3a2a"
     avail = client.inumbering.port_availability("2017301000")
     assert avail.portable is True
+    # v2.2.10 added these two fields:
+    assert avail.localRoutingNumber == "6463071993"
+    assert avail.rateCenterTier == "0"
 
 
 # ----------------------------------------------------- response unwrapping ---

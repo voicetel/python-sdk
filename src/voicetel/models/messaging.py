@@ -15,8 +15,8 @@ class MessageSendRequest(_Base):
     """POST /v2.2/messages — send an SMS or MMS.
 
     ``mediaUrls`` switches the message type to MMS (and unlocks ``subject``).
-    Note the wire field names ``fromNumber`` / ``toNumber`` — these are part of the v2.2.8
-    spec to avoid the ``from`` keyword collision present in older versions.
+    Note the wire field names ``fromNumber`` / ``toNumber`` — these were renamed (from the older
+    ``from`` / ``to``) to avoid the Python/JavaScript ``from`` reserved-word collision.
     """
 
     fromNumber: PhoneNumber = Field(description="Source 10-digit TN on the authenticated account.")

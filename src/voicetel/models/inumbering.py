@@ -211,5 +211,28 @@ class PortAvailabilityData(_Base):
 
     number: PhoneNumber
     portable: bool
-    losingCarrier: str | None = Field(description="SPID/OCN of the current carrier when reported.")
-    reason: str | None = Field(description="When ``portable`` is False, the network-supplied reason.")
+    losingCarrier: str | None = Field(
+        default=None,
+        description=(
+            "Service provider name currently providing this number, when the "
+            "network supplies it. Null when the network can't identify a provider."
+        ),
+    )
+    localRoutingNumber: PhoneNumber | None = Field(
+        default=None,
+        description=(
+            "Local Routing Number assigned to the destination switch, when the "
+            "network reports it. Null when not available. (Added in v2.2.10.)"
+        ),
+    )
+    rateCenterTier: str | None = Field(
+        default=None,
+        description=(
+            "Rate-center tier classification reported by the network. "
+            "Null when not available. (Added in v2.2.10.)"
+        ),
+    )
+    reason: str | None = Field(
+        default=None,
+        description="When ``portable`` is False, the network-supplied reason. Null when ``portable`` is True.",
+    )

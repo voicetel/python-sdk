@@ -234,5 +234,8 @@ class PortAvailabilityData(_Base):
     )
     reason: str | None = Field(
         default=None,
-        description="When ``portable`` is False, the network-supplied reason. Null when ``portable`` is True.",
+        description=(
+            "When ``portable`` is False, the network-supplied reason. "
+            "Null when ``portable`` is True."
+        ),
     )

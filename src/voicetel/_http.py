@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import time
+import uuid
 from typing import Any
 
 import httpx
@@ -66,6 +67,8 @@ class Transport:
         require_auth: bool = True,
     ) -> Any:
         headers = self._headers(require_auth=require_auth)
+        if method.upper() in ("POST", "PUT", "PATCH"):
+            headers["Idempotency-Key"] = str(uuid.uuid4())
         last_exc: Exception | None = None
         for attempt in range(self._max_retries + 1):
             try:
@@ -104,7 +107,11 @@ class Transport:
         self.close()
 
     def _headers(self, *, require_auth: bool) -> dict[str, str]:
-        headers = {"User-Agent": self._user_agent, "Accept": "application/json"}
+        headers = {
+            "User-Agent": self._user_agent,
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip",
+        }
         if require_auth:
             if not self._api_key:
                 raise ConfigurationError(
@@ -159,6 +166,8 @@ class AsyncTransport:
         require_auth: bool = True,
     ) -> Any:
         headers = self._headers(require_auth=require_auth)
+        if method.upper() in ("POST", "PUT", "PATCH"):
+            headers["Idempotency-Key"] = str(uuid.uuid4())
         last_exc: Exception | None = None
         for attempt in range(self._max_retries + 1):
             try:
@@ -196,7 +205,11 @@ class AsyncTransport:
         await self.aclose()
 
     def _headers(self, *, require_auth: bool) -> dict[str, str]:
-        headers = {"User-Agent": self._user_agent, "Accept": "application/json"}
+        headers = {
+            "User-Agent": self._user_agent,
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip",
+        }
         if require_auth:
             if not self._api_key:
                 raise ConfigurationError(

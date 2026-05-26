@@ -43,6 +43,25 @@ def test_request_attaches_bearer_and_user_agent(respx_mock: respx.Router) -> Non
     assert sent.headers["Authorization"] == f"Bearer {'k' * 32}"
     assert sent.headers["User-Agent"] == DEFAULT_USER_AGENT
     assert sent.headers["Accept"] == "application/json"
+    assert sent.headers["Accept-Encoding"] == "gzip"
+
+
+@respx.mock(base_url=BASE)
+def test_request_decodes_gzip_response(respx_mock: respx.Router) -> None:
+    import gzip
+    import json
+
+    payload = {"status": "success", "data": {"ok": True}}
+    compressed = gzip.compress(json.dumps(payload).encode())
+    respx_mock.get("/v2.2/account").mock(
+        return_value=httpx.Response(
+            200,
+            content=compressed,
+            headers={"Content-Encoding": "gzip", "Content-Type": "application/json"},
+        )
+    )
+    body = make_transport().request("GET", "/v2.2/account")
+    assert body == payload
 
 
 @respx.mock(base_url=BASE)

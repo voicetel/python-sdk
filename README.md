@@ -2,7 +2,7 @@
 
 The official Python client for the [VoiceTel REST API](https://voicetel.com/docs/api/v2.2/) — provision numbers, place orders, validate e911, send messages, and manage your account, all with type-safe, async-ready Python.
 
-![Version](https://img.shields.io/badge/version-2.2.10-blue)
+![Version](https://img.shields.io/badge/version-2.2.11-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)
@@ -51,7 +51,7 @@ The official Python client for the [VoiceTel REST API](https://voicetel.com/docs
 - **iNumbering** — inventory search, coverage queries, number orders, port-in submissions, port-out availability checks.
 - **Support** — ticket create / read / update / delete, threaded messages, replies.
 - **ACL** — IP allowlist management with structured 409 conflict bodies.
-- **Authentication** — switch between Digest, IP-only, or hybrid modes; rotate passwords.
+- **Authentication** — switch between Digest, IP, Lax (Digest | IP), or Strict (Digest + IP) modes; rotate passwords.
 
 ### 🧪 Battle-Tested
 - **108 unit tests** at **100% statement + branch coverage.**

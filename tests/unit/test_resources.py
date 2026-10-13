@@ -270,7 +270,13 @@ def test_authentication_get(client: Client, mock_router: respx.Router) -> None:
     mock_router.get("/v2.2/auth").mock(
         return_value=httpx.Response(
             200,
-            json=env({"authType": 1, "authTypeDescription": "IP Auth", "acl": [{"cidr": "203.0.113.0/24"}]}),
+            json=env(
+                {
+                    "authType": 1,
+                    "authTypeDescription": "Lax (Digest | IP)",
+                    "acl": [{"cidr": "203.0.113.0/24"}],
+                }
+            ),
         )
     )
     result = client.authentication.get()
@@ -679,11 +685,17 @@ def test_numbers_with_typed_bodies(client: Client, mock_router: respx.Router) ->
                 {
                     "number": "2015550123",
                     "campaignId": "C123",
-                    "carrier": 17,
-                    "network": "A",
-                    "upstreamCnpId": "CAMP004",
+                    "status": "enabled",
+                    "network": "B",
+                    "upstreamCnpId": "CAMP003",
+                    "carrier": 19,
+                    "alreadyAssigned": False,
+                    "orderId": "229544057",
                     "previousNetwork": None,
                     "previousNetworkCleared": False,
+                    "warning": None,
+                    "message": None,
+                    "job": None,
                 }
             ),
         )
@@ -718,7 +730,7 @@ def test_numbers_with_typed_bodies(client: Client, mock_router: respx.Router) ->
     )
     mock_router.patch("/v2.2/numbers/2015550123/port-out-pin").mock(
         return_value=httpx.Response(
-            200, json=env({"number": "2015550123", "portOutPin": "1234"})
+            200, json=env({"number": "2015550123", "portOutPin": "1234", "changed": True})
         )
     )
 
@@ -770,7 +782,10 @@ def test_numbers_with_typed_bodies(client: Client, mock_router: respx.Router) ->
     ac = client.numbers.assign_campaign(
         "2015550123", NumberCampaignAssignRequest(campaignId="C123")
     )
-    assert ac.carrier == 17
+    assert ac.status == "enabled"
+    assert ac.carrier == 19
+    assert ac.orderId == "229544057"
+    assert ac.job is None
 
     uc = client.numbers.unassign_campaign("2015550123")
     assert uc.unassigned is True
@@ -782,6 +797,106 @@ def test_numbers_with_typed_bodies(client: Client, mock_router: respx.Router) ->
         "2015550123", PortOutPinUpdateRequest(pin="1234")
     )
     assert pin.portOutPin == "1234"
+    assert pin.changed is True
+
+
+def test_assign_campaign_pending_path_c(
+    client: Client, mock_router: respx.Router
+) -> None:
+    """v2.2.11: path-C campaigns enable asynchronously — HTTP 202, status 'pending',
+    and a job to poll via GET /v2.2/numbers/{number}/messaging."""
+    mock_router.put("/v2.2/numbers/2015550123/messaging-campaign").mock(
+        return_value=httpx.Response(
+            202,
+            json=env(
+                {
+                    "number": "2015550123",
+                    "campaignId": "CAMP002",
+                    "status": "pending",
+                    "network": "C",
+                    "upstreamCnpId": "BANDW",
+                    "carrier": 1,
+                    "alreadyAssigned": False,
+                    "orderId": None,
+                    "previousNetwork": None,
+                    "previousNetworkCleared": False,
+                    "warning": None,
+                    "message": "Enablement accepted; the number is being provisioned "
+                    "with the messaging provider.",
+                    "job": {
+                        "campaignId": "CAMP002",
+                        "state": "queued",
+                        "message": "Queued",
+                        "createdAt": "2026-10-13T09:30:00+00:00",
+                        "updatedAt": "2026-10-13T09:30:00+00:00",
+                    },
+                }
+            ),
+        )
+    )
+    ac = client.numbers.assign_campaign(
+        "2015550123", NumberCampaignAssignRequest(campaignId="CAMP002")
+    )
+    assert ac.status == "pending"
+    assert ac.network == "C"
+    assert ac.carrier == 1
+    assert ac.orderId is None
+    assert ac.message is not None and "provisioned" in ac.message
+    assert ac.job is not None
+    assert ac.job.state == "queued"
+    assert ac.job.campaignId == "CAMP002"
+
+
+def test_messaging_state_reports_pending_job(
+    client: Client, mock_router: respx.Router
+) -> None:
+    """v2.2.11: while a path-C enablement is in flight the state carries network 'C'
+    and the async job under `pending`."""
+    mock_router.get("/v2.2/numbers/2015550123/messaging").mock(
+        return_value=httpx.Response(
+            200,
+            json=env(
+                {
+                    "number": "2015550123",
+                    "enabled": False,
+                    "carrier": 16,
+                    "routeIn": 0,
+                    "resource": "https://example.com",
+                    "network": "C",
+                    "campaign": None,
+                    "pending": {
+                        "campaignId": "CAMP002",
+                        "state": "hosting",
+                        "message": "Hosting order submitted",
+                        "createdAt": "2026-10-13T09:30:00+00:00",
+                        "updatedAt": "2026-10-13T09:31:00+00:00",
+                    },
+                }
+            ),
+        )
+    )
+    state = client.numbers.get_messaging("2015550123")
+    assert state.network == "C"
+    assert state.pending is not None
+    assert state.pending.state == "hosting"
+    assert state.pending.message == "Hosting order submitted"
+
+
+def test_port_out_pin_idempotent_reports_changed_false(
+    client: Client, mock_router: respx.Router
+) -> None:
+    """v2.2.11: a number that already has a (30-day-locked) PIN returns it unchanged
+    with changed=false, still HTTP 200."""
+    mock_router.patch("/v2.2/numbers/2015550123/port-out-pin").mock(
+        return_value=httpx.Response(
+            200, json=env({"number": "2015550123", "portOutPin": "4287", "changed": False})
+        )
+    )
+    pin = client.numbers.set_port_out_pin(
+        "2015550123", PortOutPinUpdateRequest(pin="9999")
+    )
+    assert pin.portOutPin == "4287"
+    assert pin.changed is False
 
 
 # ---------------------------------------------------------------- Support ---
@@ -1167,11 +1282,17 @@ async def test_async_full_resource_surface(mock_router: respx.Router) -> None:
                 {
                     "number": "2015550123",
                     "campaignId": "C1",
-                    "carrier": 17,
-                    "network": "A",
-                    "upstreamCnpId": "CAMP004",
+                    "status": "enabled",
+                    "network": "B",
+                    "upstreamCnpId": "CAMP003",
+                    "carrier": 19,
+                    "alreadyAssigned": False,
+                    "orderId": "229544057",
                     "previousNetwork": None,
                     "previousNetworkCleared": False,
+                    "warning": None,
+                    "message": None,
+                    "job": None,
                 }
             ),
         )
@@ -1206,7 +1327,7 @@ async def test_async_full_resource_surface(mock_router: respx.Router) -> None:
     )
     mock_router.patch("/v2.2/numbers/2015550123/port-out-pin").mock(
         return_value=httpx.Response(
-            200, json=env({"number": "2015550123", "portOutPin": "1234"})
+            200, json=env({"number": "2015550123", "portOutPin": "1234", "changed": True})
         )
     )
     mock_router.get("/v2.2/account").mock(

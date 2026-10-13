@@ -9,7 +9,7 @@ from pydantic import Field
 from ._base import _Base
 from .common import CidrEntry
 
-# 0=Digest, 1=IP Auth, 2=Digest OR IP Auth, 3=Digest AND IP Auth
+# 0=Digest, 1=Lax (Digest | IP), 2=IP, 3=Strict (Digest + IP)
 AuthType = Literal[0, 1, 2, 3]
 
 
@@ -21,7 +21,7 @@ class AuthPutRequest(_Base):
 
     authType: AuthType | None = Field(
         default=None,
-        description="0=Digest, 1=IP Auth, 2=Digest OR IP, 3=Digest AND IP.",
+        description="0=Digest, 1=Lax (Digest | IP), 2=IP, 3=Strict (Digest + IP).",
     )
     password: str | None = Field(
         default=None,

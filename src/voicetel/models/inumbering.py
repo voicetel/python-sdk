@@ -136,7 +136,6 @@ class PortSummary(_Base):
     foc: str | None = Field(default=None, description="Firm Order Commitment date (YYYYMMDD).")
     createdAt: str | None = None
     message: str | None = None
-    supportUrl: str | None = Field(default=None, description="Related support ticket conversation URL.")
 
 
 class PortDetail(_Base):
@@ -179,7 +178,7 @@ class OrderCreateData(_Base):
     """Data payload from POST /v2.2/orders."""
 
     orderId: str
-    amountCharged: float = Field(description="USD deducted from accounts.cash.")
+    amountCharged: float = Field(description="Amount deducted from the account balance.")
     numbersOrdered: list[str] = Field(description="Numbers inserted into the account on success.")
     failed: list[OrderFailedEntry] = Field(default_factory=list)
 

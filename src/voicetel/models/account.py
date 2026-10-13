@@ -35,7 +35,6 @@ class AccountServices(_Base):
     cnam: bool | None = Field(default=None, description="Inbound CNAM lookups enabled.")
     bypassMedia: bool | None = None
     intl: bool | None = Field(default=None, description="International calling enabled.")
-    rcid: bool | None = Field(default=None, description="Remote Caller ID display enabled.")
     mms: bool | None = None
     dialer: bool | None = None
     sms: bool | None = None

@@ -119,9 +119,14 @@ from .messaging import (
     MessagingCampaignStatusData,
 )
 from .numbers import (
+    CampaignAssignNetwork,
+    CampaignAssignStatus,
     CampaignBinding,
     CampaignUnassignFailure,
+    MessagingEnablementJob,
+    MessagingEnablementJobState,
     MessagingNetwork,
+    MessagingStateNetwork,
     NumberAddData,
     NumberAddRequest,
     NumberCampaignAssignRequest,
@@ -221,6 +226,8 @@ __all__ = [
     # messaging
     "BrandRegistrationResult",
     # numbers
+    "CampaignAssignNetwork",
+    "CampaignAssignStatus",
     "CampaignBinding",
     "CampaignRegistrationResult",
     "CampaignStatusItem",
@@ -276,7 +283,10 @@ __all__ = [
     "MessagingCampaignCreateData",
     "MessagingCampaignCreateRequest",
     "MessagingCampaignStatusData",
+    "MessagingEnablementJob",
+    "MessagingEnablementJobState",
     "MessagingNetwork",
+    "MessagingStateNetwork",
     "MrcCharge",
     "NameType",
     "NumberAddData",

@@ -70,7 +70,13 @@ class NumberSmsRequest(_Base):
 
 
 class NumberMessagingPatchRequest(_Base):
-    """PATCH /v2.2/numbers/{number}/messaging — update inbound and/or outbound routing."""
+    """PATCH /v2.2/numbers/{number}/messaging — update inbound and/or outbound routing.
+
+    At least one of ``routeIn`` / ``routeOut`` must be present. ``routeIn`` must be a
+    numbers_sms row id owned by the authenticated account, or 0 to detach. ``routeOut``
+    must be 0 (outbound off) or the route the number is enabled on; to move a number to
+    another campaign or messaging path use PUT /v2.2/numbers/{number}/messaging-campaign.
+    """
 
     routeIn: int | None = Field(
         default=None,
@@ -78,7 +84,7 @@ class NumberMessagingPatchRequest(_Base):
     )
     routeOut: int | None = Field(
         default=None,
-        description="Outbound carrier id (numbers.carrier value).",
+        description="Outbound carrier id.",
     )
 
 
@@ -132,6 +138,30 @@ class NumberDetail(_Base):
 
 
 MessagingNetwork = Literal["A", "B"]
+MessagingStateNetwork = Literal["A", "B", "C"]
+
+MessagingEnablementJobState = Literal[
+    "queued", "hosting", "assigning", "routing", "done", "failed"
+]
+
+
+class MessagingEnablementJob(_Base):
+    """State of an asynchronous (path C) enablement.
+
+    Attached to a campaign assignment (status ``pending``) or surfaced by
+    GET /v2.2/numbers/{number}/messaging while provisioning is in flight.
+    """
+
+    campaignId: str = Field(description="TCR campaign id being enabled.")
+    state: MessagingEnablementJobState = Field(
+        description=(
+            "queued -> hosting -> assigning -> routing -> done, or failed (see message). "
+            "The number keeps its previous routing until done."
+        ),
+    )
+    message: str = Field(description="Latest progress note, or the reason for failure.")
+    createdAt: str = Field(description="ISO 8601 timestamp the job was created.")
+    updatedAt: str = Field(description="ISO 8601 timestamp of the latest progress update.")
 
 
 class CampaignBinding(_Base):
@@ -155,13 +185,18 @@ class NumberMessagingState(_Base):
     carrier: int = Field(description="Internal carrier identifier on the numbers row.")
     routeIn: int = Field(description="numbers_sms row id for inbound; 0 = none.")
     resource: str = Field(description="URL or endpoint that receives inbound messages.")
-    network: MessagingNetwork | None = Field(
+    network: MessagingStateNetwork | None = Field(
         default=None,
-        description="Messaging path. null when carrier is 0 or non-messaging.",
+        description="Messaging path the number is currently on. null when carrier is 0 "
+        "or any non-messaging carrier.",
     )
     campaign: CampaignBinding | None = Field(
         default=None,
         description="Bound campaign with CSP-side status. null when no binding exists.",
+    )
+    pending: MessagingEnablementJob | None = Field(
+        default=None,
+        description="Async path-C enablement in progress for this number; null when none.",
     )
 
 
@@ -255,24 +290,75 @@ class NumberTranslationData(_Base):
     )
 
 
-PreviousNetwork = Literal["A", "B", "unknown"]
+PreviousNetwork = Literal["A", "B"]
+
+CampaignAssignStatus = Literal["enabled", "already", "pending"]
+CampaignAssignNetwork = Literal["B", "C"]
 
 
 class NumberMessagingCampaignAssignData(_Base):
-    """Data payload from PUT /v2.2/numbers/{number}/messaging-campaign."""
+    """Data payload from PUT /v2.2/numbers/{number}/messaging-campaign.
+
+    Result of binding a single number to a 10DLC campaign: ``status`` "enabled" (path B,
+    bound synchronously — HTTP 200), "already" (the number was already bound to this
+    campaign — idempotent no-op), or "pending" (path C, provisioned asynchronously —
+    HTTP 202; poll GET /v2.2/numbers/{number}/messaging until the job's state is
+    ``done`` or ``failed``).
+    """
 
     number: PhoneNumber
     campaignId: str = Field(description="7-character TCR campaign id.")
-    carrier: int = Field(description="Outbound carrier id (17=path A, 19=path B).")
-    network: MessagingNetwork | None = Field(
-        description="Messaging path the campaign resolves to.",
+    status: CampaignAssignStatus = Field(
+        description=(
+            'enabled = bound now (path B); already = the number was already bound to this '
+            'campaign (records reconciled, no new order); pending = accepted and being '
+            'provisioned (path C) -- poll GET /v2.2/numbers/{number}/messaging (pending) '
+            "until state is done or failed."
+        ),
     )
-    upstreamCnpId: str | None = Field(description="CNP id from the CSP sharing record.")
+    network: CampaignAssignNetwork | None = Field(
+        description='Messaging path the campaign resolves to (from the CSP sharing record). '
+        'Path B is assigned synchronously; path C is provisioned asynchronously '
+        '(status "pending").',
+    )
+    upstreamCnpId: str | None = Field(
+        description="CNP ID from the CSP sharing record: CAMP003 = path B, BANDW = path C. "
+        "(Campaigns on path A, CAMP004, are being migrated and take no new numbers.)",
+    )
+    carrier: int = Field(
+        description="Outbound carrier id the number routes through once enabled "
+        "(19 = path B, 1 = path C). For a pending path-C enablement the number keeps its "
+        "current routing until provisioning completes.",
+    )
+    alreadyAssigned: bool = Field(
+        description="True when the number was already bound to this campaign on the target "
+        "messaging path; records are reconciled and no new network order is placed.",
+    )
+    orderId: str | int | None = Field(
+        default=None,
+        description="Network order id created for a path-B assignment. Null for path C "
+        "(see job), idempotent no-ops, and assignments confirmed without a new order.",
+    )
     previousNetwork: PreviousNetwork | None = Field(
-        description="Path the number was on before this assignment, if any.",
+        description="Messaging path the number was bound to before this call — null if "
+        "there was no prior binding, 'A' or 'B' if a conflict was detected.",
     )
     previousNetworkCleared: bool = Field(
-        description="True if a prior conflicting binding was disabled to allow this one.",
+        description="True if a conflicting binding on the other path was successfully "
+        "disabled to allow this assignment.",
+    )
+    warning: str | None = Field(
+        default=None,
+        description="Non-fatal condition detected during the assignment (for example a "
+        "stale registration on the other messaging path whose removal has been requested).",
+    )
+    message: str | None = Field(
+        default=None,
+        description="Human-readable note for a pending enablement.",
+    )
+    job: MessagingEnablementJob | None = Field(
+        default=None,
+        description="Async enablement job when status is 'pending' (path C); null otherwise.",
     )
 
 
@@ -321,7 +407,19 @@ class NumbersMessagingListData(_Base):
 
 
 class PortOutPinUpdateData(_Base):
-    """Data payload from PATCH /v2.2/numbers/{number}/port-out-pin."""
+    """Data payload from PATCH /v2.2/numbers/{number}/port-out-pin.
 
-    number: PhoneNumber
-    portOutPin: Annotated[str, Field(pattern=r"^[0-9]{4}$")]
+    The call is idempotent: a PIN is locked for 30 days once set, so a number that
+    already has one returns it unchanged with ``changed=false``; both cases return
+    HTTP 200.
+    """
+
+    number: PhoneNumber = Field(description="Ten-digit telephone number whose PIN is reported.")
+    portOutPin: Annotated[str, Field(pattern=r"^[0-9]{4}$")] = Field(
+        description="The port-out PIN now on file for this number (the value just set, or "
+        "the existing value if the number was already locked).",
+    )
+    changed: bool = Field(
+        description="True if this request set the PIN; false if the number already had one, "
+        "which is locked for 30 days once set and is returned unchanged.",
+    )

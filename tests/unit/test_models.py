@@ -12,6 +12,8 @@ from voicetel.models import (
     NumberAddRequest,
     NumberCampaignAssignRequest,
     NumberLidbRequest,
+    NumberMessagingCampaignAssignData,
+    NumberMessagingState,
     OrderCreateRequest,
     PortFeature,
     PortFeatureRouting,
@@ -171,3 +173,77 @@ def test_support_conversation_number_aliased_to_ticket_number() -> None:
     payload = c.model_dump(by_alias=True, exclude_unset=True)
     assert payload["number"] == 1015
     assert "ticket_number" not in payload
+
+
+# ------------------------------------- v2.2.11 messaging-campaign shapes ---
+
+ASSIGN_PAYLOAD = {
+    "number": "2015550123",
+    "campaignId": "CAMP002",
+    "status": "enabled",
+    "network": "B",
+    "upstreamCnpId": "CAMP003",
+    "carrier": 19,
+    "alreadyAssigned": False,
+    "orderId": "229544057",
+    "previousNetwork": None,
+    "previousNetworkCleared": False,
+    "warning": None,
+    "message": None,
+    "job": None,
+}
+
+
+def test_campaign_assign_data_parses_pending_job() -> None:
+    data = NumberMessagingCampaignAssignData.model_validate(
+        {
+            **ASSIGN_PAYLOAD,
+            "status": "pending",
+            "network": "C",
+            "upstreamCnpId": "BANDW",
+            "carrier": 1,
+            "orderId": None,
+            "job": {
+                "campaignId": "CAMP002",
+                "state": "queued",
+                "message": "Queued",
+                "createdAt": "2026-10-13T09:30:00+00:00",
+                "updatedAt": "2026-10-13T09:30:00+00:00",
+            },
+        }
+    )
+    assert data.status == "pending"
+    assert data.job is not None
+    assert data.job.state == "queued"
+    assert data.job.message == "Queued"
+
+
+def test_campaign_assign_network_no_longer_accepts_a() -> None:
+    """v2.2.11: campaigns on path A are being migrated — the assign result network
+    enum is B/C only."""
+    with pytest.raises(ValidationError):
+        NumberMessagingCampaignAssignData.model_validate({**ASSIGN_PAYLOAD, "network": "A"})
+
+
+def test_previous_network_drops_unknown() -> None:
+    """v2.2.11 removed 'unknown' from previousNetwork — only A/B/null remain."""
+    with pytest.raises(ValidationError):
+        NumberMessagingCampaignAssignData.model_validate(
+            {**ASSIGN_PAYLOAD, "previousNetwork": "unknown"}
+        )
+
+
+def test_messaging_state_network_accepts_c() -> None:
+    """v2.2.11: path C exists on per-number messaging state too."""
+    state = NumberMessagingState.model_validate(
+        {
+            "number": "2015550123",
+            "enabled": False,
+            "carrier": 1,
+            "routeIn": 0,
+            "resource": "x",
+            "network": "C",
+        }
+    )
+    assert state.network == "C"
+    assert state.pending is None

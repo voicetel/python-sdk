@@ -45,7 +45,8 @@ class MessagingBrandCreateRequest(_Base):
 class MessagingCampaignCreateRequest(_Base):
     """POST /v2.2/messaging/campaigns.
 
-    ``campaignClassName`` and ``campaignStartDate`` are auto-populated if omitted.
+    ``campaignClassName`` (from the campaign registry) and ``campaignStartDate``
+    (today) are auto-populated if omitted.
     """
 
     messagingBrandId: str
@@ -150,12 +151,54 @@ class MessagingCampaignCreateData(_Base):
     result: CampaignRegistrationResult
 
 
+class CampaignDcaCarrier(_Base):
+    """One carrier's latest DCA decision in :class:`CampaignDca`."""
+
+    carrier: str = Field(description="Carrier name, e.g. 'T-Mobile'.")
+    status: str = Field(
+        description="Carrier decision: ACTIVE, REJECTED, SUSPENDED, UNSUSPENDED or TERMINATED.",
+    )
+    detail: str = Field(description="The reviewer's note, as given.")
+    updatedAt: str = Field(description="ISO 8601 timestamp of the decision.")
+
+
+class CampaignDca(_Base):
+    """Carrier (DCA) review progress for a campaign.
+
+    ``null`` for ``CAMPAIGN_INVALID_ID`` statuses.
+    """
+
+    electionComplete: bool = Field(
+        description="True once every carrier has a DCA assigned to review the campaign.",
+    )
+    electedCarriers: list[str] | None = Field(
+        default=None,
+        description="Carriers with a DCA assigned so far (null when unavailable).",
+    )
+    carriers: list[CampaignDcaCarrier] = Field(
+        description="Each carrier DCA decision received, latest per carrier.",
+    )
+
+
 class CampaignStatusItem(_Base):
     """A single campaign and its current numbers."""
 
     id: str = Field(description="TCR campaign id.")
-    status: str = Field(description="CSP status, e.g. CAMPAIGN_DCA_COMPLETE, ACTIVE, ...")
+    status: str = Field(
+        description=(
+            "Campaign status: CAMPAIGN_DCA_COMPLETE (ready: carrier review finished, "
+            "numbers assigned), CAMPAIGN_DCA_COMPLETE_NO_NUMBERS_ASSIGNED, "
+            "CAMPAIGN_PENDING_DCA (active at the campaign registry, but carrier (DCA) "
+            "review is not finished yet; numbers cannot be enabled until it is), "
+            "CAMPAIGN_DCA_REJECTED (a carrier's DCA rejected or suspended the campaign; "
+            "see dca.carriers), CAMPAIGN_<registry status>, or CAMPAIGN_INVALID_ID."
+        ),
+    )
     numbers: list[str] = Field(description="Numbers currently bound to the campaign.")
+    dca: CampaignDca | None = Field(
+        default=None,
+        description="Carrier (DCA) review progress. null for CAMPAIGN_INVALID_ID.",
+    )
 
 
 class MessagingCampaignStatusData(_Base):

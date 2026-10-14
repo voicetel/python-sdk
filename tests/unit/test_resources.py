@@ -516,7 +516,33 @@ def test_messaging_full_surface(client: Client, mock_router: respx.Router) -> No
         return_value=httpx.Response(
             200,
             json=env(
-                {"campaigns": [{"id": "C1", "status": "ACTIVE", "numbers": ["2015550123"]}]}
+                {
+                    "campaigns": [
+                        {
+                            "id": "C1",
+                            "status": "CAMPAIGN_DCA_COMPLETE",
+                            "numbers": ["2015550123"],
+                            "dca": {
+                                "electionComplete": True,
+                                "electedCarriers": ["AT&T", "T-Mobile"],
+                                "carriers": [
+                                    {
+                                        "carrier": "T-Mobile",
+                                        "status": "ACTIVE",
+                                        "detail": "Campaign approved",
+                                        "updatedAt": "2026-10-13T09:30:00Z",
+                                    }
+                                ],
+                            },
+                        },
+                        {
+                            "id": "C2",
+                            "status": "CAMPAIGN_INVALID_ID",
+                            "numbers": [],
+                            "dca": None,
+                        },
+                    ]
+                }
             ),
         )
     )
@@ -541,6 +567,11 @@ def test_messaging_full_surface(client: Client, mock_router: respx.Router) -> No
     assert brand.result.status == "Success"
     status = client.messaging.campaign_status()
     assert status.campaigns[0].id == "C1"
+    assert status.campaigns[0].dca is not None
+    assert status.campaigns[0].dca.electionComplete is True
+    assert status.campaigns[0].dca.carriers[0].carrier == "T-Mobile"
+    assert status.campaigns[0].dca.carriers[0].status == "ACTIVE"
+    assert status.campaigns[1].dca is None
     camp = client.messaging.campaign_create(
         MessagingCampaignCreateRequest(
             messagingBrandId="B", externalCampaignId="C", campaignDescription="d"

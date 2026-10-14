@@ -102,6 +102,8 @@ from .inumbering import (
 from .lookups import CnamData, LrnData, LrnLookupData
 from .messaging import (
     BrandRegistrationResult,
+    CampaignDca,
+    CampaignDcaCarrier,
     CampaignRegistrationResult,
     CampaignStatusItem,
     MessageDirection,
@@ -229,6 +231,8 @@ __all__ = [
     "CampaignAssignNetwork",
     "CampaignAssignStatus",
     "CampaignBinding",
+    "CampaignDca",
+    "CampaignDcaCarrier",
     "CampaignRegistrationResult",
     "CampaignStatusItem",
     "CampaignUnassignFailure",

@@ -71,6 +71,18 @@ def test_messaging_campaign_status_is_iterable(client: Client) -> None:
     assert isinstance(campaigns, MessagingCampaignStatusData)
 
 
+def test_messaging_health_returns_payload(client: Client) -> None:
+    # v2.2.15: read-only health overview; no response schema, so the SDK returns raw JSON.
+    health = client.messaging.health()
+    assert health is not None
+
+
+def test_messaging_health_alerts_returns_payload(client: Client) -> None:
+    # v2.2.15: read-only alert-email setting; raw JSON payload.
+    alerts = client.messaging.health_alerts()
+    assert alerts is not None
+
+
 # --- Rate-limited (6/hr/IP). Run sparingly; CI should gate these behind a separate marker. ---
 
 

@@ -589,6 +589,56 @@ def test_messaging_numbers_state_no_args(client: Client, mock_router: respx.Rout
     assert client.messaging.numbers_state().numbers == []
 
 
+def test_messaging_health_surface(client: Client, mock_router: respx.Router) -> None:
+    """v2.2.15: messaging-health endpoints. The spec defines no response schema for these,
+    so the SDK returns the decoded JSON payload as-is (raw dict/list) and only the request
+    bodies/query are typed."""
+    mock_router.get("/v2.2/messaging/health").mock(
+        return_value=httpx.Response(200, json=env({"summary": {"numbers": 3}}))
+    )
+    alerts_get = mock_router.get("/v2.2/messaging/health/alerts").mock(
+        return_value=httpx.Response(200, json=env({"enabled": True}))
+    )
+    alerts_put = mock_router.put("/v2.2/messaging/health/alerts").mock(
+        return_value=httpx.Response(200, json=env({"enabled": False}))
+    )
+    check = mock_router.post("/v2.2/messaging/health/check").mock(
+        return_value=httpx.Response(200, json=env({"number": "2125550123", "inService": True}))
+    )
+    samples = mock_router.get("/v2.2/messaging/health/samples").mock(
+        return_value=httpx.Response(200, json=env([{"reason": "spam"}]))
+    )
+
+    health = client.messaging.health()
+    assert health == {"summary": {"numbers": 3}}  # raw payload, no typed model
+
+    assert client.messaging.health_alerts() == {"enabled": True}
+    assert alerts_get.calls.last.request.method == "GET"
+
+    updated = client.messaging.set_health_alerts(enabled=False)
+    assert updated == {"enabled": False}
+    assert json.loads(alerts_put.calls.last.request.content) == {"enabled": False}
+
+    checked = client.messaging.health_check(number="2125550123")
+    assert checked["inService"] is True
+    assert json.loads(check.calls.last.request.content) == {"number": "2125550123"}
+
+    blocked = client.messaging.health_samples(number="2125550123")
+    assert blocked == [{"reason": "spam"}]
+    assert "number=2125550123" in str(samples.calls.last.request.url)
+
+
+def test_messaging_health_passes_through_bare_payload(
+    client: Client, mock_router: respx.Router
+) -> None:
+    """These endpoints have no spec'd envelope; a bare (non-``{status,data}``) body is
+    returned unchanged."""
+    mock_router.get("/v2.2/messaging/health").mock(
+        return_value=httpx.Response(200, json={"summary": {"healthy": 2}})
+    )
+    assert client.messaging.health() == {"summary": {"healthy": 2}}
+
+
 # ---------------------------------------------------------------- Numbers ---
 
 
@@ -1221,6 +1271,21 @@ async def test_async_full_resource_surface(mock_router: respx.Router) -> None:
     mock_router.get("/v2.2/numbers/messaging").mock(
         return_value=httpx.Response(200, json=env({"numbers": []}))
     )
+    mock_router.get("/v2.2/messaging/health").mock(
+        return_value=httpx.Response(200, json=env({}))
+    )
+    mock_router.get("/v2.2/messaging/health/alerts").mock(
+        return_value=httpx.Response(200, json=env({"enabled": True}))
+    )
+    mock_router.put("/v2.2/messaging/health/alerts").mock(
+        return_value=httpx.Response(200, json=env({"enabled": True}))
+    )
+    mock_router.post("/v2.2/messaging/health/check").mock(
+        return_value=httpx.Response(200, json=env({}))
+    )
+    mock_router.get("/v2.2/messaging/health/samples").mock(
+        return_value=httpx.Response(200, json=env([]))
+    )
     mock_router.get("/v2.2/numbers").mock(
         return_value=httpx.Response(200, json=env({"numbers": [_NUMBER_DETAIL]}))
     )
@@ -1509,6 +1574,11 @@ async def test_async_full_resource_surface(mock_router: respx.Router) -> None:
         )
         await c.messaging.numbers_state(numbers=["2015550123"])
         await c.messaging.numbers_state()
+        await c.messaging.health()
+        await c.messaging.health_alerts()
+        await c.messaging.set_health_alerts(enabled=True)
+        await c.messaging.health_check(number="2015550123")
+        await c.messaging.health_samples(number="2015550123")
         await c.numbers.list()
         await c.numbers.add(NumberAddRequest(number="2015550123"))
         await c.numbers.get("2015550123")

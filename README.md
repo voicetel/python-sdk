@@ -2,7 +2,7 @@
 
 The official Python client for the [VoiceTel REST API](https://voicetel.com/docs/api/v2.2/) — provision numbers, place orders, validate e911, send messages, and manage your account, all with type-safe, async-ready Python.
 
-![Version](https://img.shields.io/badge/version-2.2.14-blue)
+![Version](https://img.shields.io/badge/version-2.2.15-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)
@@ -46,7 +46,7 @@ The official Python client for the [VoiceTel REST API](https://voicetel.com/docs
 - **Account** — profile, sub-accounts, CDRs, credits, payments, MRC, registration, password recovery.
 - **e911** — record provisioning, address validation, lookup, removal.
 - **Gateways** — list, create, update, delete, view bound numbers.
-- **Messaging** — SMS & MMS sending, message history, 10DLC brand and campaign registration, per-number messaging state.
+- **Messaging** — SMS & MMS sending, message history, 10DLC brand and campaign registration, per-number messaging state, and messaging health (account overview, per-number live check, spam-blocked samples, alert-email setting).
 - **Lookups** — CNAM and LRN dips.
 - **iNumbering** — inventory search, coverage queries, number orders, port-in submissions, port-out availability checks.
 - **Support** — ticket create / read / update / delete, threaded messages, replies.
@@ -127,7 +127,7 @@ with Client() as c:
 | `client.gateways` | Termination routes | `c.gateways.list()` |
 | `client.inumbering` | Inventory, orders, port-ins | `c.inumbering.search_inventory(npa=201)` |
 | `client.lookups` | CNAM & LRN dips | `c.lookups.lrn("2015550123", ani="2015550100")` |
-| `client.messaging` | SMS/MMS, 10DLC brands & campaigns | `c.messaging.send(MessageSendRequest(...))` |
+| `client.messaging` | SMS/MMS, 10DLC brands & campaigns, messaging health | `c.messaging.send(MessageSendRequest(...))` |
 | `client.numbers` | All operations on TNs on the account | `c.numbers.assign_campaign("2015550123", ...)` |
 | `client.support` | Tickets, replies, attachments | `c.support.create(TicketCreateRequest(...))` |
 
@@ -203,8 +203,8 @@ asyncio.run(fetch_state(["2015550123", "2015551235"]))
 
 These endpoints are limited to **6 requests per hour per IP**:
 
-- `account/info`
-- `account/mrc` (`client.account.recurring_charges()`)
+- `account`
+- `account/recurring-charges` (`client.account.recurring_charges()`)
 - `account/cdr` (`client.account.cdr()`)
 - `account/api-key` (`client.login()`)
 

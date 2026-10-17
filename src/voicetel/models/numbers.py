@@ -15,13 +15,20 @@ class NumberAddRequest(_Base):
     """POST /v2.2/numbers."""
 
     number: PhoneNumber = Field(description="10-digit TN to attach to the account.")
-    route: int | None = Field(default=None, description="Gateway route ID; defaults to 4 (DID).")
+    route: int | None = Field(
+        default=None,
+        description="Global route type: 1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), "
+        "5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. Used when adding a number.",
+    )
 
 
 class NumberRouteRequest(_Base):
     """PUT /v2.2/numbers/{number}/route."""
 
-    route: int
+    route: int = Field(
+        description="Global route type: 1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), "
+        "5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. Set with PUT /v2.2/numbers/{number}/route.",
+    )
 
 
 class NumberCnamRequest(_Base):
@@ -121,7 +128,10 @@ class NumberDetail(_Base):
     translated: PhoneNumber = Field(
         description="Destination after translation rewrite — usually equals ``number``.",
     )
-    route: int = Field(description="Gateway id the number is currently routed to.")
+    route: int = Field(
+        description="Global route type: 1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), "
+        "5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. Per-number route in the list.",
+    )
     gateway: str | None = Field(
         default=None,
         description="Gateway address (IP[:port]) or system route name.",
@@ -207,7 +217,10 @@ class NumberAddData(_Base):
     """Data payload from POST /v2.2/numbers."""
 
     number: PhoneNumber
-    route: int = Field(description="Gateway id the number is currently routed to.")
+    route: int = Field(
+        description="Global route type: 1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), "
+        "5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. Returned after adding a number.",
+    )
 
 
 class NumberCnamData(_Base):
@@ -263,14 +276,20 @@ class NumberMoveData(_Base):
 
     number: PhoneNumber
     accountId: int = Field(description="Destination account the number was moved to.")
-    route: int = Field(description="gateway_id on the destination account.")
+    route: int = Field(
+        description="Global route type: 1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), "
+        "5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. Route on the destination account after the move.",
+    )
 
 
 class NumberRouteData(_Base):
     """Data payload from PUT /v2.2/numbers/{number}/route."""
 
     number: PhoneNumber
-    route: int
+    route: int = Field(
+        description="Global route type: 1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), "
+        "5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. Echo of the applied route.",
+    )
 
 
 class NumberSmsData(_Base):

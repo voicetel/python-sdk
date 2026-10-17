@@ -710,7 +710,7 @@ def test_numbers_with_typed_bodies(client: Client, mock_router: respx.Router) ->
         )
     )
     mock_router.put("/v2.2/numbers/2015550123/route").mock(
-        return_value=httpx.Response(200, json=env({"number": "2015550123", "route": 7}))
+        return_value=httpx.Response(200, json=env({"number": "2015550123", "route": 4}))
     )
     mock_router.put("/v2.2/numbers/2015550123/translation").mock(
         return_value=httpx.Response(
@@ -837,8 +837,8 @@ def test_numbers_with_typed_bodies(client: Client, mock_router: respx.Router) ->
     moved = client.numbers.move("2015550123", NumberMoveRequest(accountId=99, route=4))
     assert moved.accountId == 99
 
-    route = client.numbers.set_route("2015550123", NumberRouteRequest(route=7))
-    assert route.route == 7
+    route = client.numbers.set_route("2015550123", NumberRouteRequest(route=4))
+    assert route.route == 4
 
     tr = client.numbers.set_translation(
         "2015550123", NumberTranslationRequest(translation="2015551235")

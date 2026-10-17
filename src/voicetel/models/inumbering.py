@@ -31,7 +31,8 @@ class OrderNumberSpec(_Base):
     number: PhoneNumber
     route: int | None = Field(
         default=None,
-        description="Gateway ID on this account; defaults to 4.",
+        description="Global route type: 1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), "
+        "5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. Route for numbers in this order.",
     )
 
 

@@ -5,9 +5,9 @@ Quickstart::
     from voicetel import Client
 
     with Client() as c:
-        c.login(username=1234567890, password="...")
-        for n in c.numbers.list():
-            print(n["number"])
+        c.login(username="1234567890", password="...")
+        for n in c.numbers.list().numbers:
+            print(n.number)
 """
 
 from __future__ import annotations

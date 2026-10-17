@@ -1,8 +1,14 @@
 from __future__ import annotations
 
 from typing import Any
+from urllib.parse import quote
 
 from .._http import AsyncTransport, Transport
+
+
+def quote_path(value: object) -> str:
+    """URL-encode a path parameter (number, dn, id, ...) for safe interpolation into a URL."""
+    return quote(str(value), safe="")
 
 
 def unwrap(envelope: Any) -> Any:

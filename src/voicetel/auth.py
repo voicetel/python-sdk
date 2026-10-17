@@ -8,11 +8,12 @@ from .exceptions import ApiError, AuthenticationError
 API_KEY_PATH = "/v2.2/account/api-key"
 
 
-def exchange_api_key(transport: Transport, username: int | str, password: str) -> str:
+def exchange_api_key(transport: Transport, username: str, password: str) -> str:
     """Exchange username/password for a 32-hex API key and install it on ``transport``.
 
     This is the only endpoint that does not require an Authorization header. Subject to the
-    6 req/hour/IP rate limit shared by all ``account/*`` endpoints.
+    6 req/hour/IP rate limit shared with ``GET /v2.2/account``, ``GET /v2.2/account/cdr``
+    and ``GET /v2.2/account/recurring-charges``.
     """
     body = transport.request(
         "POST",
@@ -26,7 +27,7 @@ def exchange_api_key(transport: Transport, username: int | str, password: str) -
 
 
 async def aexchange_api_key(
-    transport: AsyncTransport, username: int | str, password: str
+    transport: AsyncTransport, username: str, password: str
 ) -> str:
     """Async counterpart to :func:`exchange_api_key`."""
     body = await transport.request(

@@ -57,7 +57,7 @@ from .authentication import (
     AuthUpdatedEntry,
     AuthUpdatedField,
 )
-from .common import CidrEntry, ErrorResponse
+from .common import CidrEntry, ErrorObject, ErrorResponse
 from .e911 import (
     E911AddressRequest,
     E911AllData,
@@ -259,6 +259,7 @@ __all__ = [
     "E911RecordData",
     "E911ValidateData",
     "E911ValidatedAddress",
+    "ErrorObject",
     "ErrorResponse",
     # gateways
     "GatewayAddRequest",

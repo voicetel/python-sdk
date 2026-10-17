@@ -2,8 +2,8 @@
 
 Strict rules in this file:
 - No state mutations. No POST/PUT/PATCH/DELETE.
-- ``account/cdr``, ``account/recurring_charges``, ``account/payments``, and ``account/registration``
-  count against the 6 req/hour/IP rate limit shared with ``api-key`` — we exercise them lightly.
+- ``account.get``, ``account/cdr`` and ``account/recurring_charges`` count against the
+  6 req/hour/IP rate limit shared with ``api-key`` — we exercise them lightly.
 - Lookups (CNAM/LRN) cost money per call; we hit each at most once.
 """
 
@@ -52,7 +52,7 @@ def test_support_tickets_list_is_iterable(client: Client) -> None:
 
 
 def test_inventory_coverage_is_iterable(client: Client) -> None:
-    coverage = client.inumbering.coverage()
+    coverage = client.inumbering.coverage(count_by="state")
     assert isinstance(coverage, InventoryCoverageData)
 
 
@@ -67,7 +67,8 @@ def test_authentication_get_returns_dict(client: Client) -> None:
 
 
 def test_messaging_campaign_status_is_iterable(client: Client) -> None:
-    campaigns = client.messaging.campaign_status()
+    # `ids` is required; an unknown id comes back as a CAMPAIGN_INVALID_ID item.
+    campaigns = client.messaging.campaign_status(ids=["UNKNOWN0"])
     assert isinstance(campaigns, MessagingCampaignStatusData)
 
 
@@ -81,9 +82,6 @@ def test_messaging_health_alerts_returns_payload(client: Client) -> None:
     # v2.2.15: read-only alert-email setting; raw JSON payload.
     alerts = client.messaging.health_alerts()
     assert alerts is not None
-
-
-# --- Rate-limited (6/hr/IP). Run sparingly; CI should gate these behind a separate marker. ---
 
 
 def test_account_registration(client: Client) -> None:

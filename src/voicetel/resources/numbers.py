@@ -33,7 +33,7 @@ from ..models import (
     PortOutPinUpdateData,
     PortOutPinUpdateRequest,
 )
-from ._base import AsyncResource, Resource, unwrap
+from ._base import AsyncResource, Resource, quote_path, unwrap
 
 
 class NumbersResource(Resource):
@@ -49,29 +49,31 @@ class NumbersResource(Resource):
 
     def get(self, number: str) -> NumberDetail:
         return NumberDetail.model_validate(
-            unwrap(self._t.request("GET", f"/v2.2/numbers/{number}"))
+            unwrap(self._t.request("GET", f"/v2.2/numbers/{quote_path(number)}"))
         )
 
     def remove(self, number: str) -> None:
         """DELETE /v2.2/numbers/{number} — returns 204 No Content."""
-        self._t.request("DELETE", f"/v2.2/numbers/{number}")
+        self._t.request("DELETE", f"/v2.2/numbers/{quote_path(number)}")
 
     def move(self, number: str, body: NumberMoveRequest) -> NumberMoveData:
         return NumberMoveData.model_validate(
             unwrap(
-                self._t.request("PATCH", f"/v2.2/numbers/{number}", json=body.to_payload())
+                self._t.request(
+                    "PATCH", f"/v2.2/numbers/{quote_path(number)}", json=body.to_payload()
+                )
             )
         )
 
     def release(self, number: str) -> None:
         """POST /v2.2/numbers/{number}/release — returns 204 No Content."""
-        self._t.request("POST", f"/v2.2/numbers/{number}/release")
+        self._t.request("POST", f"/v2.2/numbers/{quote_path(number)}/release")
 
     def set_route(self, number: str, body: NumberRouteRequest) -> NumberRouteData:
         return NumberRouteData.model_validate(
             unwrap(
                 self._t.request(
-                    "PUT", f"/v2.2/numbers/{number}/route", json=body.to_payload()
+                    "PUT", f"/v2.2/numbers/{quote_path(number)}/route", json=body.to_payload()
                 )
             )
         )
@@ -82,7 +84,9 @@ class NumbersResource(Resource):
         return NumberTranslationData.model_validate(
             unwrap(
                 self._t.request(
-                    "PUT", f"/v2.2/numbers/{number}/translation", json=body.to_payload()
+                    "PUT",
+                    f"/v2.2/numbers/{quote_path(number)}/translation",
+                    json=body.to_payload(),
                 )
             )
         )
@@ -91,7 +95,7 @@ class NumbersResource(Resource):
         return NumberCnamData.model_validate(
             unwrap(
                 self._t.request(
-                    "PUT", f"/v2.2/numbers/{number}/cnam", json=body.to_payload()
+                    "PUT", f"/v2.2/numbers/{quote_path(number)}/cnam", json=body.to_payload()
                 )
             )
         )
@@ -100,60 +104,62 @@ class NumbersResource(Resource):
         return NumberLidbData.model_validate(
             unwrap(
                 self._t.request(
-                    "PUT", f"/v2.2/numbers/{number}/lidb", json=body.to_payload()
+                    "PUT", f"/v2.2/numbers/{quote_path(number)}/lidb", json=body.to_payload()
                 )
             )
         )
 
     def get_fax(self, number: str) -> NumberFaxData:
         return NumberFaxData.model_validate(
-            unwrap(self._t.request("GET", f"/v2.2/numbers/{number}/fax"))
+            unwrap(self._t.request("GET", f"/v2.2/numbers/{quote_path(number)}/fax"))
         )
 
     def set_fax(self, number: str, body: NumberFaxRequest) -> NumberFaxData:
         return NumberFaxData.model_validate(
             unwrap(
                 self._t.request(
-                    "PUT", f"/v2.2/numbers/{number}/fax", json=body.to_payload()
+                    "PUT", f"/v2.2/numbers/{quote_path(number)}/fax", json=body.to_payload()
                 )
             )
         )
 
     def remove_fax(self, number: str) -> None:
-        self._t.request("DELETE", f"/v2.2/numbers/{number}/fax")
+        self._t.request("DELETE", f"/v2.2/numbers/{quote_path(number)}/fax")
 
     def set_forward(self, number: str, body: NumberForwardRequest) -> NumberForwardData:
         return NumberForwardData.model_validate(
             unwrap(
                 self._t.request(
-                    "PUT", f"/v2.2/numbers/{number}/forward", json=body.to_payload()
+                    "PUT",
+                    f"/v2.2/numbers/{quote_path(number)}/forward",
+                    json=body.to_payload(),
                 )
             )
         )
 
     def remove_forward(self, number: str) -> None:
-        self._t.request("DELETE", f"/v2.2/numbers/{number}/forward")
+        self._t.request("DELETE", f"/v2.2/numbers/{quote_path(number)}/forward")
 
     def get_sms(self, number: str) -> NumberSmsData:
         return NumberSmsData.model_validate(
-            unwrap(self._t.request("GET", f"/v2.2/numbers/{number}/sms"))
+            unwrap(self._t.request("GET", f"/v2.2/numbers/{quote_path(number)}/sms"))
         )
 
     def set_sms(self, number: str, body: NumberSmsRequest) -> NumberSmsData:
         return NumberSmsData.model_validate(
             unwrap(
                 self._t.request(
-                    "PUT", f"/v2.2/numbers/{number}/sms", json=body.to_payload()
+                    "PUT", f"/v2.2/numbers/{quote_path(number)}/sms", json=body.to_payload()
                 )
             )
         )
 
     def remove_sms(self, number: str) -> None:
-        self._t.request("DELETE", f"/v2.2/numbers/{number}/sms")
+        self._t.request("DELETE", f"/v2.2/numbers/{quote_path(number)}/sms")
 
     def get_messaging(self, number: str) -> NumberMessagingState:
         return NumberMessagingState.model_validate(
-            unwrap(self._t.request("GET", f"/v2.2/numbers/{number}/messaging"))
+            unwrap(self._t.request("GET", f"/v2.2/numbers/{quote_path(number)}/messaging"))
         )
 
     def patch_messaging(
@@ -162,7 +168,9 @@ class NumbersResource(Resource):
         return NumberMessagingPatchData.model_validate(
             unwrap(
                 self._t.request(
-                    "PATCH", f"/v2.2/numbers/{number}/messaging", json=body.to_payload()
+                    "PATCH",
+                    f"/v2.2/numbers/{quote_path(number)}/messaging",
+                    json=body.to_payload(),
                 )
             )
         )
@@ -174,28 +182,36 @@ class NumbersResource(Resource):
             unwrap(
                 self._t.request(
                     "PUT",
-                    f"/v2.2/numbers/{number}/messaging-campaign",
+                    f"/v2.2/numbers/{quote_path(number)}/messaging-campaign",
                     json=body.to_payload(),
                 )
             )
         )
 
-    def unassign_campaign(self, number: str) -> NumberMessagingCampaignUnassignData:
+    def unassign_campaign(
+        self, number: str, *, campaign_id: str
+    ) -> NumberMessagingCampaignUnassignData:
+        """DELETE /v2.2/numbers/{number}/messaging-campaign — ``campaign_id`` is required."""
         return NumberMessagingCampaignUnassignData.model_validate(
             unwrap(
-                self._t.request("DELETE", f"/v2.2/numbers/{number}/messaging-campaign")
+                self._t.request(
+                    "DELETE",
+                    f"/v2.2/numbers/{quote_path(number)}/messaging-campaign",
+                    params={"campaignId": campaign_id},
+                )
             )
         )
 
     def bulk_unassign_campaign(
-        self, numbers: Sequence[str]
+        self, numbers: Sequence[str], *, campaign_id: str
     ) -> NumbersMessagingCampaignUnassignData:
+        """DELETE /v2.2/numbers/messaging-campaign — no body; both params are query strings."""
         return NumbersMessagingCampaignUnassignData.model_validate(
             unwrap(
                 self._t.request(
                     "DELETE",
                     "/v2.2/numbers/messaging-campaign",
-                    json={"numbers": list(numbers)},
+                    params={"numbers": ",".join(numbers), "campaignId": campaign_id},
                 )
             )
         )
@@ -206,7 +222,9 @@ class NumbersResource(Resource):
         return PortOutPinUpdateData.model_validate(
             unwrap(
                 self._t.request(
-                    "PATCH", f"/v2.2/numbers/{number}/port-out-pin", json=body.to_payload()
+                    "PATCH",
+                    f"/v2.2/numbers/{quote_path(number)}/port-out-pin",
+                    json=body.to_payload(),
                 )
             )
         )
@@ -225,29 +243,29 @@ class NumbersAsyncResource(AsyncResource):
 
     async def get(self, number: str) -> NumberDetail:
         return NumberDetail.model_validate(
-            unwrap(await self._t.request("GET", f"/v2.2/numbers/{number}"))
+            unwrap(await self._t.request("GET", f"/v2.2/numbers/{quote_path(number)}"))
         )
 
     async def remove(self, number: str) -> None:
-        await self._t.request("DELETE", f"/v2.2/numbers/{number}")
+        await self._t.request("DELETE", f"/v2.2/numbers/{quote_path(number)}")
 
     async def move(self, number: str, body: NumberMoveRequest) -> NumberMoveData:
         return NumberMoveData.model_validate(
             unwrap(
                 await self._t.request(
-                    "PATCH", f"/v2.2/numbers/{number}", json=body.to_payload()
+                    "PATCH", f"/v2.2/numbers/{quote_path(number)}", json=body.to_payload()
                 )
             )
         )
 
     async def release(self, number: str) -> None:
-        await self._t.request("POST", f"/v2.2/numbers/{number}/release")
+        await self._t.request("POST", f"/v2.2/numbers/{quote_path(number)}/release")
 
     async def set_route(self, number: str, body: NumberRouteRequest) -> NumberRouteData:
         return NumberRouteData.model_validate(
             unwrap(
                 await self._t.request(
-                    "PUT", f"/v2.2/numbers/{number}/route", json=body.to_payload()
+                    "PUT", f"/v2.2/numbers/{quote_path(number)}/route", json=body.to_payload()
                 )
             )
         )
@@ -258,7 +276,9 @@ class NumbersAsyncResource(AsyncResource):
         return NumberTranslationData.model_validate(
             unwrap(
                 await self._t.request(
-                    "PUT", f"/v2.2/numbers/{number}/translation", json=body.to_payload()
+                    "PUT",
+                    f"/v2.2/numbers/{quote_path(number)}/translation",
+                    json=body.to_payload(),
                 )
             )
         )
@@ -267,7 +287,7 @@ class NumbersAsyncResource(AsyncResource):
         return NumberCnamData.model_validate(
             unwrap(
                 await self._t.request(
-                    "PUT", f"/v2.2/numbers/{number}/cnam", json=body.to_payload()
+                    "PUT", f"/v2.2/numbers/{quote_path(number)}/cnam", json=body.to_payload()
                 )
             )
         )
@@ -276,27 +296,27 @@ class NumbersAsyncResource(AsyncResource):
         return NumberLidbData.model_validate(
             unwrap(
                 await self._t.request(
-                    "PUT", f"/v2.2/numbers/{number}/lidb", json=body.to_payload()
+                    "PUT", f"/v2.2/numbers/{quote_path(number)}/lidb", json=body.to_payload()
                 )
             )
         )
 
     async def get_fax(self, number: str) -> NumberFaxData:
         return NumberFaxData.model_validate(
-            unwrap(await self._t.request("GET", f"/v2.2/numbers/{number}/fax"))
+            unwrap(await self._t.request("GET", f"/v2.2/numbers/{quote_path(number)}/fax"))
         )
 
     async def set_fax(self, number: str, body: NumberFaxRequest) -> NumberFaxData:
         return NumberFaxData.model_validate(
             unwrap(
                 await self._t.request(
-                    "PUT", f"/v2.2/numbers/{number}/fax", json=body.to_payload()
+                    "PUT", f"/v2.2/numbers/{quote_path(number)}/fax", json=body.to_payload()
                 )
             )
         )
 
     async def remove_fax(self, number: str) -> None:
-        await self._t.request("DELETE", f"/v2.2/numbers/{number}/fax")
+        await self._t.request("DELETE", f"/v2.2/numbers/{quote_path(number)}/fax")
 
     async def set_forward(
         self, number: str, body: NumberForwardRequest
@@ -304,34 +324,38 @@ class NumbersAsyncResource(AsyncResource):
         return NumberForwardData.model_validate(
             unwrap(
                 await self._t.request(
-                    "PUT", f"/v2.2/numbers/{number}/forward", json=body.to_payload()
+                    "PUT",
+                    f"/v2.2/numbers/{quote_path(number)}/forward",
+                    json=body.to_payload(),
                 )
             )
         )
 
     async def remove_forward(self, number: str) -> None:
-        await self._t.request("DELETE", f"/v2.2/numbers/{number}/forward")
+        await self._t.request("DELETE", f"/v2.2/numbers/{quote_path(number)}/forward")
 
     async def get_sms(self, number: str) -> NumberSmsData:
         return NumberSmsData.model_validate(
-            unwrap(await self._t.request("GET", f"/v2.2/numbers/{number}/sms"))
+            unwrap(await self._t.request("GET", f"/v2.2/numbers/{quote_path(number)}/sms"))
         )
 
     async def set_sms(self, number: str, body: NumberSmsRequest) -> NumberSmsData:
         return NumberSmsData.model_validate(
             unwrap(
                 await self._t.request(
-                    "PUT", f"/v2.2/numbers/{number}/sms", json=body.to_payload()
+                    "PUT", f"/v2.2/numbers/{quote_path(number)}/sms", json=body.to_payload()
                 )
             )
         )
 
     async def remove_sms(self, number: str) -> None:
-        await self._t.request("DELETE", f"/v2.2/numbers/{number}/sms")
+        await self._t.request("DELETE", f"/v2.2/numbers/{quote_path(number)}/sms")
 
     async def get_messaging(self, number: str) -> NumberMessagingState:
         return NumberMessagingState.model_validate(
-            unwrap(await self._t.request("GET", f"/v2.2/numbers/{number}/messaging"))
+            unwrap(
+                await self._t.request("GET", f"/v2.2/numbers/{quote_path(number)}/messaging")
+            )
         )
 
     async def patch_messaging(
@@ -340,7 +364,9 @@ class NumbersAsyncResource(AsyncResource):
         return NumberMessagingPatchData.model_validate(
             unwrap(
                 await self._t.request(
-                    "PATCH", f"/v2.2/numbers/{number}/messaging", json=body.to_payload()
+                    "PATCH",
+                    f"/v2.2/numbers/{quote_path(number)}/messaging",
+                    json=body.to_payload(),
                 )
             )
         )
@@ -352,32 +378,36 @@ class NumbersAsyncResource(AsyncResource):
             unwrap(
                 await self._t.request(
                     "PUT",
-                    f"/v2.2/numbers/{number}/messaging-campaign",
+                    f"/v2.2/numbers/{quote_path(number)}/messaging-campaign",
                     json=body.to_payload(),
                 )
             )
         )
 
     async def unassign_campaign(
-        self, number: str
+        self, number: str, *, campaign_id: str
     ) -> NumberMessagingCampaignUnassignData:
+        """DELETE /v2.2/numbers/{number}/messaging-campaign — ``campaign_id`` is required."""
         return NumberMessagingCampaignUnassignData.model_validate(
             unwrap(
                 await self._t.request(
-                    "DELETE", f"/v2.2/numbers/{number}/messaging-campaign"
+                    "DELETE",
+                    f"/v2.2/numbers/{quote_path(number)}/messaging-campaign",
+                    params={"campaignId": campaign_id},
                 )
             )
         )
 
     async def bulk_unassign_campaign(
-        self, numbers: Sequence[str]
+        self, numbers: Sequence[str], *, campaign_id: str
     ) -> NumbersMessagingCampaignUnassignData:
+        """DELETE /v2.2/numbers/messaging-campaign — no body; both params are query strings."""
         return NumbersMessagingCampaignUnassignData.model_validate(
             unwrap(
                 await self._t.request(
                     "DELETE",
                     "/v2.2/numbers/messaging-campaign",
-                    json={"numbers": list(numbers)},
+                    params={"numbers": ",".join(numbers), "campaignId": campaign_id},
                 )
             )
         )
@@ -388,7 +418,9 @@ class NumbersAsyncResource(AsyncResource):
         return PortOutPinUpdateData.model_validate(
             unwrap(
                 await self._t.request(
-                    "PATCH", f"/v2.2/numbers/{number}/port-out-pin", json=body.to_payload()
+                    "PATCH",
+                    f"/v2.2/numbers/{quote_path(number)}/port-out-pin",
+                    json=body.to_payload(),
                 )
             )
         )

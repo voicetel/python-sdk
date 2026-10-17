@@ -1,4 +1,4 @@
-"""Resource-method tests against v2.2.10 typed response models.
+"""Resource-method tests against v2.2.15 typed response models.
 
 Each test:
 1. Mocks the live endpoint with a payload that the response model can validate.
@@ -113,19 +113,21 @@ def test_account_add(client: Client, mock_router: respx.Router) -> None:
             json=env({"username": "1000000099", "name": "Sub", "email": "s@x.com", "password": "abc"}),
         )
     )
-    result = client.account.add(AccountAddRequest(username=1000000099, name="Sub", email="s@x.com"))
+    result = client.account.add(AccountAddRequest(username="1000000099", name="Sub", email="s@x.com"))
     assert result.password == "abc"
     assert result.username == "1000000099"
 
 
 def test_account_signup(client: Client, mock_router: respx.Router) -> None:
-    mock_router.post("/v2.2/accounts").mock(
+    route = mock_router.post("/v2.2/accounts").mock(
         return_value=httpx.Response(
             201, json=env({"username": "1000000099", "email": "x@y.com", "password": "abc"})
         )
     )
     result = client.account.signup(AccountSignupRequest(name="X", email="x@y.com"))
     assert result.password == "abc"
+    # Public endpoint: no Authorization header even though the client holds an API key.
+    assert "Authorization" not in route.calls.last.request.headers
 
 
 def test_account_cdr_passes_query_and_parses_records(
@@ -165,7 +167,7 @@ def test_account_cdr_passes_query_and_parses_records(
 
 
 def test_account_credits(client: Client, mock_router: respx.Router) -> None:
-    mock_router.get("/v2.2/account/credits").mock(
+    route = mock_router.get("/v2.2/account/credits").mock(
         return_value=httpx.Response(
             200,
             json=env(
@@ -181,6 +183,10 @@ def test_account_credits(client: Client, mock_router: respx.Router) -> None:
     assert len(result.credits) == 1
     assert result.credits[0].amount == 25.0
     assert result.credits[0].paid is False
+    assert "status" not in str(route.calls.last.request.url)
+
+    client.account.credits(status="unpaid")
+    assert "status=unpaid" in str(route.calls.last.request.url)
 
 
 def test_account_recurring_charges(client: Client, mock_router: respx.Router) -> None:
@@ -220,9 +226,7 @@ def test_account_payments(client: Client, mock_router: respx.Router) -> None:
 
 def test_account_registration(client: Client, mock_router: respx.Router) -> None:
     mock_router.get("/v2.2/account/registration").mock(
-        return_value=httpx.Response(
-            200, json=env({"agent": "Zoiper", "uri": "sip:x@y", "expires": 300})
-        )
+        return_value=httpx.Response(200, json=env({"agent": "Zoiper", "uri": "sip:x@y"}))
     )
     result = client.account.registration()
     assert result.agent == "Zoiper"
@@ -254,13 +258,17 @@ def test_acl_add_and_remove(client: Client, mock_router: respx.Router) -> None:
     mock_router.post("/v2.2/acl").mock(
         return_value=httpx.Response(200, json=env({"added": [{"cidr": "203.0.113.0/24"}]}))
     )
-    mock_router.delete("/v2.2/acl").mock(
+    delete_route = mock_router.delete("/v2.2/acl").mock(
         return_value=httpx.Response(200, json=env({"removed": [{"cidr": "203.0.113.0/24"}]}))
     )
     a = client.acl.add(body)
     assert a.added[0].cidr == "203.0.113.0/24"
-    r = client.acl.remove(body)
+    # DELETE /v2.2/acl takes a required comma-separated `cidrs` query param — no body.
+    r = client.acl.remove(cidrs=["203.0.113.0/24", "203.0.113.1/32"])
     assert r.removed[0].cidr == "203.0.113.0/24"
+    sent = delete_route.calls.last.request
+    assert "cidrs=203.0.113.0%2F24%2C203.0.113.1%2F32" in str(sent.url)
+    assert not sent.content
 
 
 # ------------------------------------------------------------------- Auth ---
@@ -479,7 +487,7 @@ def test_lookups_lrn(client: Client, mock_router: respx.Router) -> None:
 
 
 def test_messaging_full_surface(client: Client, mock_router: respx.Router) -> None:
-    mock_router.get("/v2.2/messages").mock(
+    messages_route = mock_router.get("/v2.2/messages").mock(
         return_value=httpx.Response(
             200,
             json=env(
@@ -512,7 +520,7 @@ def test_messaging_full_surface(client: Client, mock_router: respx.Router) -> No
             201, json=env({"result": {"statusCode": "200", "status": "Success"}})
         )
     )
-    mock_router.get("/v2.2/messaging/campaigns").mock(
+    campaigns_route = mock_router.get("/v2.2/messaging/campaigns").mock(
         return_value=httpx.Response(
             200,
             json=env(
@@ -555,8 +563,11 @@ def test_messaging_full_surface(client: Client, mock_router: respx.Router) -> No
         return_value=httpx.Response(200, json=env({"numbers": []}))
     )
 
-    hist = client.messaging.history(number="2015550100")
+    hist = client.messaging.history(number="2015550100", from_=1747345200, to_=1747258800)
     assert hist.type == "sms"
+    hist_url = str(messages_route.calls.last.request.url)
+    assert "number=2015550100" in hist_url
+    assert "from=1747345200" in hist_url and "to=1747258800" in hist_url
     sent = client.messaging.send(
         MessageSendRequest(fromNumber="2015550100", toNumber="2015550123", text="hi")
     )
@@ -565,7 +576,8 @@ def test_messaging_full_surface(client: Client, mock_router: respx.Router) -> No
         MessagingBrandCreateRequest(messagingBrandId="BABC", messagingBrandName="X")
     )
     assert brand.result.status == "Success"
-    status = client.messaging.campaign_status()
+    status = client.messaging.campaign_status(ids=["C1", "C2"])
+    assert "ids=C1%2CC2" in str(campaigns_route.calls.last.request.url)
     assert status.campaigns[0].id == "C1"
     assert status.campaigns[0].dca is not None
     assert status.campaigns[0].dca.electionComplete is True
@@ -582,11 +594,15 @@ def test_messaging_full_surface(client: Client, mock_router: respx.Router) -> No
     assert state.numbers == []
 
 
-def test_messaging_numbers_state_no_args(client: Client, mock_router: respx.Router) -> None:
-    mock_router.get("/v2.2/numbers/messaging").mock(
+def test_messaging_numbers_state_sends_comma_separated_numbers(
+    client: Client, mock_router: respx.Router
+) -> None:
+    """GET /v2.2/numbers/messaging requires the ``numbers`` query param."""
+    route = mock_router.get("/v2.2/numbers/messaging").mock(
         return_value=httpx.Response(200, json=env({"numbers": []}))
     )
-    assert client.messaging.numbers_state().numbers == []
+    assert client.messaging.numbers_state(numbers=["2015550123", "2015551235"]).numbers == []
+    assert "numbers=2015550123%2C2015551235" in str(route.calls.last.request.url)
 
 
 def test_messaging_health_surface(client: Client, mock_router: respx.Router) -> None:
@@ -781,7 +797,7 @@ def test_numbers_with_typed_bodies(client: Client, mock_router: respx.Router) ->
             ),
         )
     )
-    mock_router.delete("/v2.2/numbers/2015550123/messaging-campaign").mock(
+    unassign_route = mock_router.delete("/v2.2/numbers/2015550123/messaging-campaign").mock(
         return_value=httpx.Response(
             200,
             json=env(
@@ -795,7 +811,7 @@ def test_numbers_with_typed_bodies(client: Client, mock_router: respx.Router) ->
             ),
         )
     )
-    mock_router.delete("/v2.2/numbers/messaging-campaign").mock(
+    bulk_unassign_route = mock_router.delete("/v2.2/numbers/messaging-campaign").mock(
         return_value=httpx.Response(
             200,
             json=env(
@@ -868,11 +884,15 @@ def test_numbers_with_typed_bodies(client: Client, mock_router: respx.Router) ->
     assert ac.orderId == "229544057"
     assert ac.job is None
 
-    uc = client.numbers.unassign_campaign("2015550123")
+    uc = client.numbers.unassign_campaign("2015550123", campaign_id="C123")
     assert uc.unassigned is True
+    assert "campaignId=C123" in str(unassign_route.calls.last.request.url)
 
-    bulk = client.numbers.bulk_unassign_campaign(["2015550123"])
+    bulk = client.numbers.bulk_unassign_campaign(["2015550123"], campaign_id="C123")
     assert bulk.unassignedNumbers == ["2015550123"]
+    bulk_url = str(bulk_unassign_route.calls.last.request.url)
+    assert "numbers=2015550123" in bulk_url and "campaignId=C123" in bulk_url
+    assert not bulk_unassign_route.calls.last.request.content  # no body
 
     pin = client.numbers.set_port_out_pin(
         "2015550123", PortOutPinUpdateRequest(pin="1234")
@@ -1031,7 +1051,7 @@ def test_support_full_surface(client: Client, mock_router: respx.Router) -> None
 
 
 def test_inumbering_full_surface(client: Client, mock_router: respx.Router) -> None:
-    mock_router.get("/v2.2/inventory").mock(
+    inventory_route = mock_router.get("/v2.2/inventory").mock(
         return_value=httpx.Response(
             200,
             json=env(
@@ -1049,7 +1069,7 @@ def test_inumbering_full_surface(client: Client, mock_router: respx.Router) -> N
             ),
         )
     )
-    mock_router.get("/v2.2/inventory/coverage").mock(
+    coverage_route = mock_router.get("/v2.2/inventory/coverage").mock(
         return_value=httpx.Response(200, json=env({"coverage": [{"count": 100, "npa": "201"}]}))
     )
     mock_router.post("/v2.2/orders").mock(
@@ -1068,7 +1088,7 @@ def test_inumbering_full_surface(client: Client, mock_router: respx.Router) -> N
     mock_router.get("/v2.2/ports").mock(
         return_value=httpx.Response(200, json=env({"ports": [{"id": "abc", "status": "Complete"}]}))
     )
-    mock_router.get("/v2.2/ports/42").mock(
+    mock_router.get("/v2.2/ports/abc12").mock(
         return_value=httpx.Response(200, json=env({"port": {"id": "abc", "status": "Complete"}}))
     )
     mock_router.post("/v2.2/ports").mock(
@@ -1101,15 +1121,27 @@ def test_inumbering_full_surface(client: Client, mock_router: respx.Router) -> N
         )
     )
 
-    inv = client.inumbering.search_inventory(state="NJ", limit=10)
+    inv = client.inumbering.search_inventory(
+        tn_mask="201555*", quantity=10, province="NJ", rate_center="CLOSTER", lata="224"
+    )
     assert inv.numbers[0].number == "2015550103"
-    cov = client.inumbering.coverage(state="NJ")
+    inv_url = str(inventory_route.calls.last.request.url)
+    assert "tnMask=201555%2A" in inv_url
+    assert "quantity=10" in inv_url
+    assert "province=NJ" in inv_url
+    assert "rateCenter=CLOSTER" in inv_url
+    assert "lata=224" in inv_url
+    cov = client.inumbering.coverage(count_by="npanxx", loc_state="NJ", npa="201")
     assert cov.coverage[0].count == 100
+    cov_url = str(coverage_route.calls.last.request.url)
+    assert "countBy=npanxx" in cov_url
+    assert "locState=NJ" in cov_url
+    assert "npa=201" in cov_url
     order = client.inumbering.order(OrderCreateRequest(numbers=["2015550123"]))
     assert order.orderId == "1747345200"
     ports = client.inumbering.ports()
     assert ports.ports[0].id == "abc"
-    port = client.inumbering.port(42)
+    port = client.inumbering.port("abc12")  # 5-character pid
     assert port.port.id == "abc"
     submitted = client.inumbering.submit_port(
         PortSubmitRequest(
@@ -1509,7 +1541,7 @@ async def test_async_full_resource_surface(mock_router: respx.Router) -> None:
             ),
         )
     )
-    mock_router.get("/v2.2/ports/42").mock(
+    mock_router.get("/v2.2/ports/ab123").mock(
         return_value=httpx.Response(200, json=env({"port": {"status": "Complete"}}))
     )
     mock_router.get("/v2.2/ports/availability/2015550123").mock(
@@ -1529,7 +1561,7 @@ async def test_async_full_resource_surface(mock_router: respx.Router) -> None:
     async with AsyncClient(api_key="k", base_url=BASE, max_retries=0) as c:
         await c.acl.list()
         await c.acl.add(AclModifyRequest(acl=[CidrEntry(cidr="203.0.113.0/24")]))
-        await c.acl.remove(AclModifyRequest(acl=[CidrEntry(cidr="203.0.113.0/24")]))
+        await c.acl.remove(cidrs=["203.0.113.0/24"])
         await c.authentication.get()
         await c.authentication.update(AuthPutRequest(authType=1))
         await c.e911.list()
@@ -1559,21 +1591,20 @@ async def test_async_full_resource_surface(mock_router: respx.Router) -> None:
         await c.gateways.numbers(1)
         await c.lookups.cnam("2015550123")
         await c.lookups.lrn("2015550123", "2015550100")
-        await c.messaging.history()
+        await c.messaging.history(number="2015550123")
         await c.messaging.send(
             MessageSendRequest(fromNumber="2015550100", toNumber="2015550123", text="hi")
         )
         await c.messaging.brands(
             MessagingBrandCreateRequest(messagingBrandId="BABC", messagingBrandName="X")
         )
-        await c.messaging.campaign_status()
+        await c.messaging.campaign_status(ids=["C1"])
         await c.messaging.campaign_create(
             MessagingCampaignCreateRequest(
                 messagingBrandId="B", externalCampaignId="C", campaignDescription="d"
             )
         )
         await c.messaging.numbers_state(numbers=["2015550123"])
-        await c.messaging.numbers_state()
         await c.messaging.health()
         await c.messaging.health_alerts()
         await c.messaging.set_health_alerts(enabled=True)
@@ -1610,14 +1641,14 @@ async def test_async_full_resource_surface(mock_router: respx.Router) -> None:
         await c.numbers.assign_campaign(
             "2015550123", NumberCampaignAssignRequest(campaignId="C1")
         )
-        await c.numbers.unassign_campaign("2015550123")
-        await c.numbers.bulk_unassign_campaign(["2015550123"])
+        await c.numbers.unassign_campaign("2015550123", campaign_id="C1")
+        await c.numbers.bulk_unassign_campaign(["2015550123"], campaign_id="C1")
         await c.numbers.set_port_out_pin(
             "2015550123", PortOutPinUpdateRequest(pin="1234")
         )
         await c.account.get()
         await c.account.update(AccountPutRequest(timezone="UTC"))
-        await c.account.add(AccountAddRequest(username=2, name="Y", email="y@x.com"))
+        await c.account.add(AccountAddRequest(username="1000000002", name="Y", email="y@x.com"))
         await c.account.signup(AccountSignupRequest(name="Y", email="y@x.com"))
         await c.account.cdr(start=0, end=0)
         await c.account.credits()
@@ -1632,11 +1663,11 @@ async def test_async_full_resource_surface(mock_router: respx.Router) -> None:
         await c.support.delete(1)
         await c.support.messages(1)
         await c.support.reply(1, TicketReplyRequest(message="ok"))
-        await c.inumbering.search_inventory(state="NJ")
-        await c.inumbering.coverage()
+        await c.inumbering.search_inventory(tn_mask="201", province="NJ")
+        await c.inumbering.coverage(count_by="state")
         await c.inumbering.order(OrderCreateRequest(numbers=["2015550123"]))
         await c.inumbering.ports()
-        await c.inumbering.port(42)
+        await c.inumbering.port("ab123")
         await c.inumbering.submit_port(
             PortSubmitRequest(
                 did=["2015550123"],

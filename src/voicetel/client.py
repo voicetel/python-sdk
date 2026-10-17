@@ -83,7 +83,7 @@ class Client:
     def base_url(self) -> str:
         return self._transport.base_url
 
-    def login(self, username: int | str, password: str) -> str:
+    def login(self, username: str, password: str) -> str:
         """Exchange username/password for an API key and install it. Returns the new key."""
         return exchange_api_key(self._transport, username, password)
 
@@ -141,7 +141,7 @@ class AsyncClient:
     def base_url(self) -> str:
         return self._transport.base_url
 
-    async def login(self, username: int | str, password: str) -> str:
+    async def login(self, username: str, password: str) -> str:
         return await aexchange_api_key(self._transport, username, password)
 
     async def aclose(self) -> None:

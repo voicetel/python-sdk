@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Literal
 
 from pydantic import Field
 
@@ -18,17 +18,20 @@ class CidrEntry(_Base):
     cidr: str = Field(description="IPv4 CIDR. Routable public; mask /8, /16, /24, or /32.")
 
 
+class ErrorObject(_Base):
+    """The ``error`` object inside :class:`ErrorResponse`."""
+
+    code: int = Field(description="Machine-readable error code (mirrors the HTTP status).")
+    message: str = Field(description="Free-form message text.")
+
+
 class ErrorResponse(_Base):
-    """Generic error envelope returned for non-2xx responses.
+    """Error envelope returned for non-2xx responses: ``{"status": "error", "error": {...}}``.
 
     Note that the SDK normally raises :class:`voicetel.ApiError` (or a subclass) rather than
     returning this directly; the model exists so callers can pattern-match on
     ``error.body`` when an :class:`~voicetel.ApiError` carries a JSON payload.
     """
 
-    status: str | None = None
-    code: str | None = None
-    message: str | None = None
-    error: str | None = None
-    # Free-form payload — some error responses embed structured details.
-    details: dict[str, Any] | None = None
+    status: Literal["error"]
+    error: ErrorObject

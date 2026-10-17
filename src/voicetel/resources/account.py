@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Literal
+
 from ..models import (
     AccountAddData,
     AccountAddRequest,
@@ -18,15 +20,18 @@ from ..models import (
 )
 from ._base import AsyncResource, Resource, unwrap
 
+CreditStatusFilter = Literal["paid", "unpaid"]
+
 
 class AccountResource(Resource):
     """Operations under the ``Account`` tag.
 
-    Note: ``cdr``, ``credits``, ``recurring_charges``, ``payments``, ``registration`` and
-    ``client.login()`` share a 6 req/hour/IP rate limit. Bursting will trigger 429s.
+    Note: ``get``, ``cdr``, ``recurring_charges`` and ``client.login()`` share a
+    6 req/hour/IP rate limit. Bursting will trigger 429s.
     """
 
     def get(self) -> AccountData:
+        """GET /v2.2/account — account profile. Rate-limited (6/hr/IP)."""
         return AccountData.model_validate(unwrap(self._t.request("GET", "/v2.2/account")))
 
     def update(self, body: AccountPutRequest) -> AccountPutData:
@@ -40,9 +45,13 @@ class AccountResource(Resource):
         )
 
     def signup(self, body: AccountSignupRequest) -> AccountSignupData:
-        """POST /v2.2/accounts — public sign-up flow."""
+        """POST /v2.2/accounts — public sign-up flow (no auth required)."""
         return AccountSignupData.model_validate(
-            unwrap(self._t.request("POST", "/v2.2/accounts", json=body.to_payload()))
+            unwrap(
+                self._t.request(
+                    "POST", "/v2.2/accounts", json=body.to_payload(), require_auth=False
+                )
+            )
         )
 
     def cdr(self, *, start: int | None = None, end: int | None = None) -> AccountCdrData:
@@ -51,12 +60,14 @@ class AccountResource(Resource):
             unwrap(self._t.request("GET", "/v2.2/account/cdr", params={"start": start, "end": end}))
         )
 
-    def credits(self) -> AccountCreditsData:
+    def credits(self, *, status: CreditStatusFilter | None = None) -> AccountCreditsData:
+        """GET /v2.2/account/credits — credit history. ``status`` filters paid/unpaid."""
         return AccountCreditsData.model_validate(
-            unwrap(self._t.request("GET", "/v2.2/account/credits"))
+            unwrap(self._t.request("GET", "/v2.2/account/credits", params={"status": status}))
         )
 
     def recurring_charges(self) -> AccountMrcData:
+        """GET /v2.2/account/recurring-charges — MRC breakdown. Rate-limited (6/hr/IP)."""
         return AccountMrcData.model_validate(
             unwrap(self._t.request("GET", "/v2.2/account/recurring-charges"))
         )
@@ -87,6 +98,7 @@ class AccountResource(Resource):
 
 class AccountAsyncResource(AsyncResource):
     async def get(self) -> AccountData:
+        """GET /v2.2/account — account profile. Rate-limited (6/hr/IP)."""
         return AccountData.model_validate(unwrap(await self._t.request("GET", "/v2.2/account")))
 
     async def update(self, body: AccountPutRequest) -> AccountPutData:
@@ -100,13 +112,19 @@ class AccountAsyncResource(AsyncResource):
         )
 
     async def signup(self, body: AccountSignupRequest) -> AccountSignupData:
+        """POST /v2.2/accounts — public sign-up flow (no auth required)."""
         return AccountSignupData.model_validate(
-            unwrap(await self._t.request("POST", "/v2.2/accounts", json=body.to_payload()))
+            unwrap(
+                await self._t.request(
+                    "POST", "/v2.2/accounts", json=body.to_payload(), require_auth=False
+                )
+            )
         )
 
     async def cdr(
         self, *, start: int | None = None, end: int | None = None
     ) -> AccountCdrData:
+        """GET /v2.2/account/cdr — call detail records. Rate-limited (6/hr/IP)."""
         return AccountCdrData.model_validate(
             unwrap(
                 await self._t.request(
@@ -115,12 +133,16 @@ class AccountAsyncResource(AsyncResource):
             )
         )
 
-    async def credits(self) -> AccountCreditsData:
+    async def credits(self, *, status: CreditStatusFilter | None = None) -> AccountCreditsData:
+        """GET /v2.2/account/credits — credit history. ``status`` filters paid/unpaid."""
         return AccountCreditsData.model_validate(
-            unwrap(await self._t.request("GET", "/v2.2/account/credits"))
+            unwrap(
+                await self._t.request("GET", "/v2.2/account/credits", params={"status": status})
+            )
         )
 
     async def recurring_charges(self) -> AccountMrcData:
+        """GET /v2.2/account/recurring-charges — MRC breakdown. Rate-limited (6/hr/IP)."""
         return AccountMrcData.model_validate(
             unwrap(await self._t.request("GET", "/v2.2/account/recurring-charges"))
         )

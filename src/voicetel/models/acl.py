@@ -13,9 +13,9 @@ from .common import CidrEntry
 
 
 class AclModifyRequest(_Base):
-    """Body for POST /v2.2/acl (add) and DELETE /v2.2/acl (remove)."""
+    """Body for POST /v2.2/acl (add). DELETE /v2.2/acl takes a ``cidrs`` query parameter instead."""
 
-    acl: list[CidrEntry] = Field(description="CIDR entries to add or remove.")
+    acl: list[CidrEntry] = Field(description="CIDR entries to add.")
 
 
 # -------------------------------------------------- response data shapes ---

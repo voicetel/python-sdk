@@ -242,12 +242,26 @@ def _parse(response: httpx.Response) -> Any:
         body = response.json()
     except ValueError:
         body = response.text
-    code = None
+    code: int | str | None = None
     message = f"HTTP {response.status_code}"
     if isinstance(body, dict):
-        code = body.get("code") or body.get("error")
-        message = body.get("message") or body.get("error") or message
+        error = body.get("error")
+        if isinstance(error, dict):
+            # Spec shape: {"status": "error", "error": {"code": <int>, "message": <str>}}
+            code = error.get("code")
+            message = error.get("message") or message
+        else:
+            # Legacy flat shapes: {"code": ..., "message": ...} or {"error": "..."}.
+            code = body.get("code") or (error if isinstance(error, str) else None)
+            message = (
+                body.get("message")
+                or (error if isinstance(error, str) else None)
+                or message
+            )
     raise from_response(response.status_code, code, body, message)
+
+
+_MAX_BACKOFF = 8.0
 
 
 def _backoff_delay(attempt: int, response: httpx.Response | None = None) -> float:
@@ -255,10 +269,11 @@ def _backoff_delay(attempt: int, response: httpx.Response | None = None) -> floa
         retry_after = response.headers.get("Retry-After")
         if retry_after:
             try:
-                return max(0.0, float(retry_after))
+                # Honor Retry-After, but cap it like the exponential fallback.
+                return min(_MAX_BACKOFF, max(0.0, float(retry_after)))
             except ValueError:
                 pass
-    return float(min(8.0, 0.5 * (2**attempt)))
+    return float(min(_MAX_BACKOFF, 0.5 * (2**attempt)))
 
 
 def _sleep_backoff(attempt: int, response: httpx.Response | None = None) -> None:

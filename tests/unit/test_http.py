@@ -94,13 +94,44 @@ def test_negative_max_retries_rejected_async() -> None:
 def test_status_400_raises_bad_request(respx_mock: respx.Router) -> None:
     respx_mock.get("/v2.2/account").mock(
         return_value=httpx.Response(
-            400, json={"status": "error", "code": "BAD", "message": "no good"}
+            400, json={"status": "error", "error": {"code": 400, "message": "no good"}}
         )
     )
     with pytest.raises(BadRequestError) as exc:
         make_transport().request("GET", "/v2.2/account")
-    assert exc.value.code == "BAD"
+    assert exc.value.code == 400
     assert "no good" in str(exc.value)
+
+
+@respx.mock(base_url=BASE)
+def test_error_envelope_matches_spec_shape(respx_mock: respx.Router) -> None:
+    """The spec's errorResponse is exactly ``{"status":"error","error":{"code":int,"message":str}}``."""
+    respx_mock.get("/v2.2/messages").mock(
+        return_value=httpx.Response(
+            400,
+            json={"status": "error", "error": {"code": 400, "message": "Field Required: number"}},
+        )
+    )
+    with pytest.raises(BadRequestError) as exc:
+        make_transport().request("GET", "/v2.2/messages")
+    assert exc.value.code == 400
+    assert str(exc.value) == "Field Required: number"
+    assert exc.value.body == {
+        "status": "error",
+        "error": {"code": 400, "message": "Field Required: number"},
+    }
+
+
+@respx.mock(base_url=BASE)
+def test_legacy_flat_error_shape_still_parsed(respx_mock: respx.Router) -> None:
+    """Legacy flat ``{"code": ..., "message": ...}`` / ``{"error": "..."}`` bodies still parse."""
+    respx_mock.get("/v2.2/account").mock(
+        return_value=httpx.Response(400, json={"code": "BAD", "message": "flat"})
+    )
+    with pytest.raises(BadRequestError) as exc:
+        make_transport().request("GET", "/v2.2/account")
+    assert exc.value.code == "BAD"
+    assert "flat" in str(exc.value)
 
 
 @respx.mock(base_url=BASE)
@@ -195,10 +226,10 @@ def test_query_params_drop_none_values(respx_mock: respx.Router) -> None:
         return_value=httpx.Response(200, json={"status": "success", "data": []})
     )
     make_transport().request(
-        "GET", "/v2.2/inventory", params={"state": "NJ", "limit": None}
+        "GET", "/v2.2/inventory", params={"tnMask": "201", "quantity": None}
     )
     url = route.calls.last.request.url
-    assert "state=NJ" in str(url) and "limit" not in str(url)
+    assert "tnMask=201" in str(url) and "quantity" not in str(url)
 
 
 def test_set_bearer_updates_token() -> None:
@@ -232,6 +263,14 @@ def test_backoff_caps_at_8s() -> None:
 def test_backoff_uses_retry_after_when_valid(monkeypatch: pytest.MonkeyPatch) -> None:
     r = httpx.Response(429, headers={"Retry-After": "0"})
     assert _backoff_delay(0, r) == 0.0
+
+
+def test_backoff_caps_retry_after_at_8s() -> None:
+    """A large Retry-After is honored only up to the same 8s cap as the exponential fallback."""
+    r = httpx.Response(429, headers={"Retry-After": "120"})
+    assert _backoff_delay(0, r) == 8.0
+    r = httpx.Response(429, headers={"Retry-After": "2"})
+    assert _backoff_delay(0, r) == 2.0
 
 
 def test_backoff_falls_back_when_retry_after_unparseable() -> None:
@@ -271,7 +310,7 @@ def test_client_login_then_request(mock_router: respx.Router) -> None:
         )
     )
     with Client(api_key=None, base_url=BASE, max_retries=0) as c:
-        key = c.login(1234567890, "pw")
+        key = c.login("1234567890", "pw")
         assert key == "abcd"
         assert c.api_key == "abcd"
         me = c.account.get()
@@ -284,4 +323,4 @@ def test_client_login_with_bad_response_raises(mock_router: respx.Router) -> Non
         return_value=httpx.Response(200, json={"status": "success", "data": {}})
     )
     with pytest.raises(AuthenticationError):
-        Client(api_key=None, base_url=BASE, max_retries=0).login(1, "p")
+        Client(api_key=None, base_url=BASE, max_retries=0).login("1", "p")

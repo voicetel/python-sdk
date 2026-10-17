@@ -19,13 +19,13 @@ def test_exchange_api_key_sets_bearer(respx_mock: respx.Router) -> None:
         )
     )
     t = Transport(api_key=None, base_url=BASE, max_retries=0)
-    key = exchange_api_key(t, 1234567890, "secret")
+    key = exchange_api_key(t, "1234567890", "secret")
     assert key == "32hex"
     assert t.api_key == "32hex"
     sent = route.calls.last.request
     import json
 
-    assert json.loads(sent.content) == {"username": 1234567890, "password": "secret"}
+    assert json.loads(sent.content) == {"username": "1234567890", "password": "secret"}
 
 
 @respx.mock(base_url=BASE)
@@ -35,7 +35,7 @@ def test_exchange_missing_apikey_raises(respx_mock: respx.Router) -> None:
     )
     t = Transport(api_key=None, base_url=BASE, max_retries=0)
     with pytest.raises(AuthenticationError):
-        exchange_api_key(t, 1, "p")
+        exchange_api_key(t, "1", "p")
 
 
 @respx.mock(base_url=BASE)
@@ -45,7 +45,7 @@ def test_exchange_non_dict_response_raises(respx_mock: respx.Router) -> None:
     )
     t = Transport(api_key=None, base_url=BASE, max_retries=0)
     with pytest.raises(AuthenticationError):
-        exchange_api_key(t, 1, "p")
+        exchange_api_key(t, "1", "p")
 
 
 @respx.mock(base_url=BASE)
@@ -55,7 +55,7 @@ def test_exchange_data_not_dict_raises(respx_mock: respx.Router) -> None:
     )
     t = Transport(api_key=None, base_url=BASE, max_retries=0)
     with pytest.raises(AuthenticationError):
-        exchange_api_key(t, 1, "p")
+        exchange_api_key(t, "1", "p")
 
 
 @pytest.mark.asyncio
@@ -81,7 +81,7 @@ async def test_async_client_login_uses_aexchange(mock_router: respx.Router) -> N
         )
     )
     async with AsyncClient(api_key=None, base_url=BASE, max_retries=0) as c:
-        assert await c.login(1, "p") == "zz"
+        assert await c.login("1", "p") == "zz"
         assert c.api_key == "zz"
 
 
@@ -92,4 +92,4 @@ def test_sync_client_login(mock_router: respx.Router) -> None:
         )
     )
     with Client(api_key=None, base_url=BASE, max_retries=0) as c:
-        assert c.login(1, "p") == "kk"
+        assert c.login("1", "p") == "kk"

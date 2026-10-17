@@ -243,6 +243,11 @@ class TicketData(_Base):
 class TicketsListData(_Base):
     """Data payload from GET /v2.2/support/tickets."""
 
+    total_count: int | None = Field(
+        default=None,
+        alias="totalCount",
+        description="Total tickets matching the filter.",
+    )
     tickets: list[SupportConversation]
 
 

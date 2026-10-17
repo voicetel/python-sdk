@@ -18,7 +18,7 @@ class ApiError(VoiceTelError):
     """
 
     status_code: int
-    code: str | None
+    code: int | str | None
     body: Any
 
     def __init__(
@@ -26,7 +26,7 @@ class ApiError(VoiceTelError):
         message: str,
         *,
         status_code: int,
-        code: str | None = None,
+        code: int | str | None = None,
         body: Any = None,
     ) -> None:
         super().__init__(message)
@@ -59,14 +59,19 @@ class ConflictError(ApiError):
 
 
 class RateLimitError(ApiError):
-    """HTTP 429 — too many requests. The `account/*` endpoints allow only 6 req/hour/IP."""
+    """HTTP 429 — too many requests.
+
+    Rate-limited endpoints: ``GET /v2.2/account``, ``GET /v2.2/account/cdr``,
+    ``GET /v2.2/account/recurring-charges`` and ``POST /v2.2/account/api-key``
+    (6 req/hour/IP); ``POST /v2.2/messaging/health/check`` (30 req/hour/account).
+    """
 
 
 class ServerError(ApiError):
     """HTTP 5xx — the server hit an error processing the request."""
 
 
-def from_response(status_code: int, code: str | None, body: Any, message: str) -> ApiError:
+def from_response(status_code: int, code: int | str | None, body: Any, message: str) -> ApiError:
     """Map an HTTP status to the most specific :class:`ApiError` subclass."""
     cls: type[ApiError]
     if status_code == 400:

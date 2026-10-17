@@ -8,7 +8,7 @@ from ..models import (
     E911RecordData,
     E911ValidateData,
 )
-from ._base import AsyncResource, Resource, unwrap
+from ._base import AsyncResource, Resource, quote_path, unwrap
 
 
 class E911Resource(Resource):
@@ -29,17 +29,17 @@ class E911Resource(Resource):
 
     def get(self, dn: str) -> E911RecordData:
         return E911RecordData.model_validate(
-            unwrap(self._t.request("GET", f"/v2.2/e911/{dn}"))
+            unwrap(self._t.request("GET", f"/v2.2/e911/{quote_path(dn)}"))
         )
 
     def provision(self, dn: str, body: E911ProvisionByIdRequest) -> E911RecordData:
         return E911RecordData.model_validate(
-            unwrap(self._t.request("PUT", f"/v2.2/e911/{dn}", json=body.to_payload()))
+            unwrap(self._t.request("PUT", f"/v2.2/e911/{quote_path(dn)}", json=body.to_payload()))
         )
 
     def remove(self, dn: str) -> None:
         """DELETE /v2.2/e911/{dn} — returns 204 No Content."""
-        self._t.request("DELETE", f"/v2.2/e911/{dn}")
+        self._t.request("DELETE", f"/v2.2/e911/{quote_path(dn)}")
 
 
 class E911AsyncResource(AsyncResource):
@@ -60,13 +60,13 @@ class E911AsyncResource(AsyncResource):
 
     async def get(self, dn: str) -> E911RecordData:
         return E911RecordData.model_validate(
-            unwrap(await self._t.request("GET", f"/v2.2/e911/{dn}"))
+            unwrap(await self._t.request("GET", f"/v2.2/e911/{quote_path(dn)}"))
         )
 
     async def provision(self, dn: str, body: E911ProvisionByIdRequest) -> E911RecordData:
         return E911RecordData.model_validate(
-            unwrap(await self._t.request("PUT", f"/v2.2/e911/{dn}", json=body.to_payload()))
+            unwrap(await self._t.request("PUT", f"/v2.2/e911/{quote_path(dn)}", json=body.to_payload()))
         )
 
     async def remove(self, dn: str) -> None:
-        await self._t.request("DELETE", f"/v2.2/e911/{dn}")
+        await self._t.request("DELETE", f"/v2.2/e911/{quote_path(dn)}")

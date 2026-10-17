@@ -8,6 +8,7 @@ from voicetel.models import (
     AclModifyRequest,
     CidrEntry,
     GatewayAddRequest,
+    MessageRecordValue,
     MessageSendRequest,
     NumberAddRequest,
     NumberCampaignAssignRequest,
@@ -20,6 +21,7 @@ from voicetel.models import (
     PortOutPinUpdateRequest,
     PortSubmitRequest,
     SupportConversation,
+    TicketsListData,
 )
 
 # ----------------------------------------------------------- to_payload ---
@@ -36,10 +38,10 @@ def test_to_payload_includes_explicitly_set_fields() -> None:
 
 
 def test_to_payload_excludes_unset_optional_fields() -> None:
-    req = AccountAddRequest(username=1234567890, name="Acme", email="x@y.com")
+    req = AccountAddRequest(username="1234567890", name="Acme", email="x@y.com")
     payload = req.to_payload()
     assert "masterAccount" not in payload
-    assert payload == {"username": 1234567890, "name": "Acme", "email": "x@y.com"}
+    assert payload == {"username": "1234567890", "name": "Acme", "email": "x@y.com"}
 
 
 # ---------------------------------------- wire-field name conventions ---
@@ -173,6 +175,21 @@ def test_support_conversation_number_aliased_to_ticket_number() -> None:
     payload = c.model_dump(by_alias=True, exclude_unset=True)
     assert payload["number"] == 1015
     assert "ticket_number" not in payload
+
+
+def test_tickets_list_total_count_aliased() -> None:
+    """The spec's ``totalCount`` is exposed as ``total_count``."""
+    lst = TicketsListData.model_validate({"totalCount": 7, "tickets": []})
+    assert lst.total_count == 7
+    assert lst.tickets == []
+
+
+def test_message_record_value_number_is_string() -> None:
+    """messageHistory value.number is a string TN per the updated spec."""
+    v = MessageRecordValue.model_validate(
+        {"direction": "in", "rate": "0.0150", "message": "hi", "number": "2015550123"}
+    )
+    assert v.number == "2015550123"
 
 
 # ------------------------------------- v2.2.11 messaging-campaign shapes ---

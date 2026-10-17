@@ -10,7 +10,7 @@ from ..models import (
     TicketUpdateData,
     TicketUpdateRequest,
 )
-from ._base import AsyncResource, Resource, unwrap
+from ._base import AsyncResource, Resource, quote_path, unwrap
 
 
 class SupportResource(Resource):
@@ -28,25 +28,25 @@ class SupportResource(Resource):
 
     def get(self, ticket_id: int) -> TicketData:
         return TicketData.model_validate(
-            unwrap(self._t.request("GET", f"/v2.2/support/tickets/{ticket_id}"))
+            unwrap(self._t.request("GET", f"/v2.2/support/tickets/{quote_path(ticket_id)}"))
         )
 
     def update(self, ticket_id: int, body: TicketUpdateRequest) -> TicketUpdateData:
         return TicketUpdateData.model_validate(
             unwrap(
                 self._t.request(
-                    "PUT", f"/v2.2/support/tickets/{ticket_id}", json=body.to_payload()
+                    "PUT", f"/v2.2/support/tickets/{quote_path(ticket_id)}", json=body.to_payload()
                 )
             )
         )
 
     def delete(self, ticket_id: int) -> None:
         """DELETE /v2.2/support/tickets/{id} — admin only; returns 204 No Content."""
-        self._t.request("DELETE", f"/v2.2/support/tickets/{ticket_id}")
+        self._t.request("DELETE", f"/v2.2/support/tickets/{quote_path(ticket_id)}")
 
     def messages(self, ticket_id: int) -> TicketThreadsData:
         return TicketThreadsData.model_validate(
-            unwrap(self._t.request("GET", f"/v2.2/support/tickets/{ticket_id}/messages"))
+            unwrap(self._t.request("GET", f"/v2.2/support/tickets/{quote_path(ticket_id)}/messages"))
         )
 
     def reply(self, ticket_id: int, body: TicketReplyRequest) -> TicketReplyData:
@@ -54,7 +54,7 @@ class SupportResource(Resource):
             unwrap(
                 self._t.request(
                     "POST",
-                    f"/v2.2/support/tickets/{ticket_id}/replies",
+                    f"/v2.2/support/tickets/{quote_path(ticket_id)}/replies",
                     json=body.to_payload(),
                 )
             )
@@ -76,24 +76,24 @@ class SupportAsyncResource(AsyncResource):
 
     async def get(self, ticket_id: int) -> TicketData:
         return TicketData.model_validate(
-            unwrap(await self._t.request("GET", f"/v2.2/support/tickets/{ticket_id}"))
+            unwrap(await self._t.request("GET", f"/v2.2/support/tickets/{quote_path(ticket_id)}"))
         )
 
     async def update(self, ticket_id: int, body: TicketUpdateRequest) -> TicketUpdateData:
         return TicketUpdateData.model_validate(
             unwrap(
                 await self._t.request(
-                    "PUT", f"/v2.2/support/tickets/{ticket_id}", json=body.to_payload()
+                    "PUT", f"/v2.2/support/tickets/{quote_path(ticket_id)}", json=body.to_payload()
                 )
             )
         )
 
     async def delete(self, ticket_id: int) -> None:
-        await self._t.request("DELETE", f"/v2.2/support/tickets/{ticket_id}")
+        await self._t.request("DELETE", f"/v2.2/support/tickets/{quote_path(ticket_id)}")
 
     async def messages(self, ticket_id: int) -> TicketThreadsData:
         return TicketThreadsData.model_validate(
-            unwrap(await self._t.request("GET", f"/v2.2/support/tickets/{ticket_id}/messages"))
+            unwrap(await self._t.request("GET", f"/v2.2/support/tickets/{quote_path(ticket_id)}/messages"))
         )
 
     async def reply(self, ticket_id: int, body: TicketReplyRequest) -> TicketReplyData:
@@ -101,7 +101,7 @@ class SupportAsyncResource(AsyncResource):
             unwrap(
                 await self._t.request(
                     "POST",
-                    f"/v2.2/support/tickets/{ticket_id}/replies",
+                    f"/v2.2/support/tickets/{quote_path(ticket_id)}/replies",
                     json=body.to_payload(),
                 )
             )

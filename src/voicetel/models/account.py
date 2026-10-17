@@ -104,10 +104,10 @@ class MrcCharge(_Base):
 class AccountAddRequest(_Base):
     """POST /v2.2/account — admin-only sub-account creation."""
 
-    username: int = Field(description="10-digit numeric username for the new sub-account.")
+    username: str = Field(description="10-digit numeric username for the new sub-account.")
     name: str = Field(description="Human-readable account name.")
     email: str = Field(description="Account email.")
-    masterAccount: int | None = Field(
+    masterAccount: str | None = Field(
         default=None,
         description="Billing account. Defaults to ``username``.",
     )
@@ -145,11 +145,11 @@ class ApiKeyRequest(_Base):
     """POST /v2.2/account/api-key — exchange username/password for a bearer token.
 
     No auth required for this endpoint. Subject to the 6 req/hour/IP rate limit shared by
-    ``account/cdr``, ``account/recurring-charges``, ``account/payments``, ``account/registration``,
+    ``GET /v2.2/account``, ``GET /v2.2/account/cdr``, ``GET /v2.2/account/recurring-charges``,
     and this endpoint.
     """
 
-    username: int
+    username: str
     password: str
 
 
@@ -241,7 +241,6 @@ class AccountRegistrationData(_Base):
 
     agent: str | None = Field(default=None, description="SIP User-Agent string.")
     uri: str | None = Field(default=None, description="SIP URI of the registered endpoint.")
-    expires: int | None = Field(default=None, description="Seconds until the registration expires.")
 
 
 class AccountSignupData(_Base):

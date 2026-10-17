@@ -67,9 +67,8 @@ MessageDirection = Literal["in", "out"]
 class MessageRecordValue(_Base):
     """Per-record fields inside :class:`MessageRecord`. Shape varies by ``type``.
 
-    For ``sms``/``mms``: ``sourceNumber``, ``destinationNumber``, ``direction``, ``rate``,
-    ``message`` populated; ``number`` is set to a sentinel integer (the spec types it as
-    integer even though SMS/MMS records carry actual TNs as strings via the other fields).
+    For ``sms``/``mms``: ``number`` (the far-end TN), ``direction``, ``rate`` and
+    ``message`` populated.
 
     For ``dlr``: ``sourceNumber`` and ``destinationNumber`` populated.
     """
@@ -84,7 +83,7 @@ class MessageRecordValue(_Base):
         default=None,
         description="Billed rate per message (string for precision; SMS/MMS only).",
     )
-    number: int | None = Field(default=None, description="Far-end number (SMS/MMS only).")
+    number: str | None = Field(default=None, description="Far-end number (SMS/MMS only).")
     message: str | None = Field(default=None, description="Message body (SMS/MMS only).")
 
 

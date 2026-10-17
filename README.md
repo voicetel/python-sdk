@@ -2,7 +2,7 @@
 
 The official Python client for the [VoiceTel REST API](https://voicetel.com/docs/api/v2.2/) — provision numbers, place orders, validate e911, send messages, and manage your account, all with type-safe, async-ready Python.
 
-![Version](https://img.shields.io/badge/version-2.2.15-blue)
+![Version](https://img.shields.io/badge/version-2.2.16-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)
@@ -27,7 +27,7 @@ The official Python client for the [VoiceTel REST API](https://voicetel.com/docs
 ## ✨ Features
 
 ### 🛡️ Strongly Typed End-to-End
-- **Pydantic v2 models** for every one of the 73 API operations — request bodies validated before they leave your machine, responses validated when they arrive.
+- **Pydantic v2 models** for every one of the 79 API operations — request bodies validated before they leave your machine, responses validated when they arrive.
 - **mypy-strict clean.** Full type coverage, including async, generics, and discriminated unions.
 - **Autocomplete everywhere.** Your IDE knows the shape of every field — no more guessing what's in `result["data"]["numbers"]`.
 
@@ -54,7 +54,7 @@ The official Python client for the [VoiceTel REST API](https://voicetel.com/docs
 - **Authentication** — switch between Digest, IP, Lax (Digest | IP), or Strict (Digest + IP) modes; rotate passwords.
 
 ### 🧪 Battle-Tested
-- **108 unit tests** at **100% statement + branch coverage.**
+- **109 unit tests** at **100% statement + branch coverage.**
 - **Integration test suite** that runs read-only operations against `api.voicetel.com` — gated by env vars, safe for CI.
 - **No mocks-pretending-to-be-tests.** Mocked HTTP layer with `respx`, real Pydantic validation on every fixture so spec drift gets caught.
 
@@ -78,7 +78,7 @@ from voicetel import Client
 
 with Client() as c:
     # Exchange username + password for an API key (one-time per session)
-    c.login(username=1000000001, password="hunter2")
+    c.login(username="1000000001", password="hunter2")
 
     # Typed responses — your IDE knows what `me` is.
     me = c.account.get()
@@ -95,14 +95,14 @@ Or, if you already have an API key:
 from voicetel import Client
 
 with Client(api_key="32hex...") as c:
-    coverage = c.inumbering.coverage(state="NJ")
+    coverage = c.inumbering.coverage(count_by="npanxx", loc_state="NJ")
     for bucket in coverage.coverage:
         print(f"{bucket.npa}-{bucket.nxx}: {bucket.count} TNs available")
 ```
 
 ## 🔑 Authentication
 
-Every endpoint requires `Authorization: Bearer <apikey>` **except** `POST /v2.2/account/api-key`, which exchanges username + password for a fresh key. `Client.login()` (and `AsyncClient.login()`) handles the exchange and installs the returned key on the transport.
+Every endpoint requires `Authorization: Bearer <apikey>` **except** `POST /v2.2/account/api-key` (which exchanges username + password for a fresh key), `POST /v2.2/accounts` (public sign-up) and `POST /v2.2/account/recovery` (password recovery). `Client.login()` (and `AsyncClient.login()`) handles the exchange and installs the returned key on the transport.
 
 Re-fetch the API key after any password change — the old one is invalidated.
 
@@ -112,7 +112,7 @@ Re-fetch the API key after any password change — the old one is invalidated.
 from voicetel import Client
 
 with Client() as c:
-    key = c.login(username=1000000001, password="hunter2")
+    key = c.login(username="1000000001", password="hunter2")
     # `key` is the new 32-hex bearer; the client already has it installed.
 ```
 
@@ -125,7 +125,7 @@ with Client() as c:
 | `client.authentication` | SIP/HTTP auth mode + password | `c.authentication.update(AuthPutRequest(authType=1))` |
 | `client.e911` | Records, address validation, provisioning | `c.e911.validate(E911AddressRequest(...))` |
 | `client.gateways` | Termination routes | `c.gateways.list()` |
-| `client.inumbering` | Inventory, orders, port-ins | `c.inumbering.search_inventory(npa=201)` |
+| `client.inumbering` | Inventory, orders, port-ins | `c.inumbering.search_inventory(tn_mask="201")` |
 | `client.lookups` | CNAM & LRN dips | `c.lookups.lrn("2015550123", ani="2015550100")` |
 | `client.messaging` | SMS/MMS, 10DLC brands & campaigns, messaging health | `c.messaging.send(MessageSendRequest(...))` |
 | `client.numbers` | All operations on TNs on the account | `c.numbers.assign_campaign("2015550123", ...)` |
@@ -179,7 +179,7 @@ with Client(api_key=key) as c:
     except NotFoundError:
         print("That number isn't on your account.")
     except RateLimitError as e:
-        print(f"Slow down — retry in {e.body.get('retryAfter', '?')}s")
+        print(f"Slow down — {e}")
 ```
 
 ## ⚡ Async Support

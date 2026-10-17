@@ -7,7 +7,7 @@ from ..models import (
     GatewaysListData,
     GatewayUpdateRequest,
 )
-from ._base import AsyncResource, Resource, unwrap
+from ._base import AsyncResource, Resource, quote_path, unwrap
 
 
 class GatewaysResource(Resource):
@@ -23,23 +23,23 @@ class GatewaysResource(Resource):
 
     def get(self, gateway_id: int) -> GatewayEntry:
         return GatewayEntry.model_validate(
-            unwrap(self._t.request("GET", f"/v2.2/gateways/{gateway_id}"))
+            unwrap(self._t.request("GET", f"/v2.2/gateways/{quote_path(gateway_id)}"))
         )
 
     def update(self, gateway_id: int, body: GatewayUpdateRequest) -> GatewayEntry:
         return GatewayEntry.model_validate(
             unwrap(
-                self._t.request("PUT", f"/v2.2/gateways/{gateway_id}", json=body.to_payload())
+                self._t.request("PUT", f"/v2.2/gateways/{quote_path(gateway_id)}", json=body.to_payload())
             )
         )
 
     def remove(self, gateway_id: int) -> None:
         """DELETE /v2.2/gateways/{id} — returns 204 No Content."""
-        self._t.request("DELETE", f"/v2.2/gateways/{gateway_id}")
+        self._t.request("DELETE", f"/v2.2/gateways/{quote_path(gateway_id)}")
 
     def numbers(self, gateway_id: int) -> GatewayNumbersData:
         return GatewayNumbersData.model_validate(
-            unwrap(self._t.request("GET", f"/v2.2/gateways/{gateway_id}/numbers"))
+            unwrap(self._t.request("GET", f"/v2.2/gateways/{quote_path(gateway_id)}/numbers"))
         )
 
 
@@ -56,22 +56,22 @@ class GatewaysAsyncResource(AsyncResource):
 
     async def get(self, gateway_id: int) -> GatewayEntry:
         return GatewayEntry.model_validate(
-            unwrap(await self._t.request("GET", f"/v2.2/gateways/{gateway_id}"))
+            unwrap(await self._t.request("GET", f"/v2.2/gateways/{quote_path(gateway_id)}"))
         )
 
     async def update(self, gateway_id: int, body: GatewayUpdateRequest) -> GatewayEntry:
         return GatewayEntry.model_validate(
             unwrap(
                 await self._t.request(
-                    "PUT", f"/v2.2/gateways/{gateway_id}", json=body.to_payload()
+                    "PUT", f"/v2.2/gateways/{quote_path(gateway_id)}", json=body.to_payload()
                 )
             )
         )
 
     async def remove(self, gateway_id: int) -> None:
-        await self._t.request("DELETE", f"/v2.2/gateways/{gateway_id}")
+        await self._t.request("DELETE", f"/v2.2/gateways/{quote_path(gateway_id)}")
 
     async def numbers(self, gateway_id: int) -> GatewayNumbersData:
         return GatewayNumbersData.model_validate(
-            unwrap(await self._t.request("GET", f"/v2.2/gateways/{gateway_id}/numbers"))
+            unwrap(await self._t.request("GET", f"/v2.2/gateways/{quote_path(gateway_id)}/numbers"))
         )

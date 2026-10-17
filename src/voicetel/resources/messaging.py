@@ -24,17 +24,22 @@ class MessagingResource(Resource):
     def history(
         self,
         *,
-        number: str | None = None,
-        start: int | None = None,
-        end: int | None = None,
+        number: str,
+        from_: int | None = None,
+        to_: int | None = None,
         type: MessageHistoryQueryType | None = None,
     ) -> MessageHistoryData:
+        """GET /v2.2/messages — message history for ``number`` (required).
+
+        ``from_``/``to_`` are Unix timestamps (wire params ``from``/``to``; trailing
+        underscores avoid the Python keyword). Range defaults to the last 24h server-side.
+        """
         return MessageHistoryData.model_validate(
             unwrap(
                 self._t.request(
                     "GET",
                     "/v2.2/messages",
-                    params={"number": number, "start": start, "end": end, "type": type},
+                    params={"number": number, "from": from_, "to": to_, "type": type},
                 )
             )
         )
@@ -49,9 +54,14 @@ class MessagingResource(Resource):
             unwrap(self._t.request("POST", "/v2.2/messaging/brands", json=body.to_payload()))
         )
 
-    def campaign_status(self) -> MessagingCampaignStatusData:
+    def campaign_status(self, *, ids: list[str]) -> MessagingCampaignStatusData:
+        """GET /v2.2/messaging/campaigns — status of the given campaign ids (max 100)."""
         return MessagingCampaignStatusData.model_validate(
-            unwrap(self._t.request("GET", "/v2.2/messaging/campaigns"))
+            unwrap(
+                self._t.request(
+                    "GET", "/v2.2/messaging/campaigns", params={"ids": ",".join(ids)}
+                )
+            )
         )
 
     def campaign_create(
@@ -63,12 +73,16 @@ class MessagingResource(Resource):
             )
         )
 
-    def numbers_state(self, *, numbers: list[str] | None = None) -> NumbersMessagingListData:
-        params: dict[str, str] = {}
-        if numbers is not None:
-            params["numbers"] = ",".join(numbers)
+    def numbers_state(self, *, numbers: list[str]) -> NumbersMessagingListData:
+        """GET /v2.2/numbers/messaging — messaging state of the given numbers (max 1000)."""
         return NumbersMessagingListData.model_validate(
-            unwrap(self._t.request("GET", "/v2.2/numbers/messaging", params=params))
+            unwrap(
+                self._t.request(
+                    "GET",
+                    "/v2.2/numbers/messaging",
+                    params={"numbers": ",".join(numbers)},
+                )
+            )
         )
 
     def health(self) -> Any:
@@ -131,17 +145,22 @@ class MessagingAsyncResource(AsyncResource):
     async def history(
         self,
         *,
-        number: str | None = None,
-        start: int | None = None,
-        end: int | None = None,
+        number: str,
+        from_: int | None = None,
+        to_: int | None = None,
         type: MessageHistoryQueryType | None = None,
     ) -> MessageHistoryData:
+        """GET /v2.2/messages — message history for ``number`` (required).
+
+        ``from_``/``to_`` are Unix timestamps (wire params ``from``/``to``; trailing
+        underscores avoid the Python keyword). Range defaults to the last 24h server-side.
+        """
         return MessageHistoryData.model_validate(
             unwrap(
                 await self._t.request(
                     "GET",
                     "/v2.2/messages",
-                    params={"number": number, "start": start, "end": end, "type": type},
+                    params={"number": number, "from": from_, "to": to_, "type": type},
                 )
             )
         )
@@ -160,9 +179,14 @@ class MessagingAsyncResource(AsyncResource):
             )
         )
 
-    async def campaign_status(self) -> MessagingCampaignStatusData:
+    async def campaign_status(self, *, ids: list[str]) -> MessagingCampaignStatusData:
+        """GET /v2.2/messaging/campaigns — status of the given campaign ids (max 100)."""
         return MessagingCampaignStatusData.model_validate(
-            unwrap(await self._t.request("GET", "/v2.2/messaging/campaigns"))
+            unwrap(
+                await self._t.request(
+                    "GET", "/v2.2/messaging/campaigns", params={"ids": ",".join(ids)}
+                )
+            )
         )
 
     async def campaign_create(
@@ -176,14 +200,16 @@ class MessagingAsyncResource(AsyncResource):
             )
         )
 
-    async def numbers_state(
-        self, *, numbers: list[str] | None = None
-    ) -> NumbersMessagingListData:
-        params: dict[str, str] = {}
-        if numbers is not None:
-            params["numbers"] = ",".join(numbers)
+    async def numbers_state(self, *, numbers: list[str]) -> NumbersMessagingListData:
+        """GET /v2.2/numbers/messaging — messaging state of the given numbers (max 1000)."""
         return NumbersMessagingListData.model_validate(
-            unwrap(await self._t.request("GET", "/v2.2/numbers/messaging", params=params))
+            unwrap(
+                await self._t.request(
+                    "GET",
+                    "/v2.2/numbers/messaging",
+                    params={"numbers": ",".join(numbers)},
+                )
+            )
         )
 
     async def health(self) -> Any:

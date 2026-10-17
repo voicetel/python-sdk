@@ -64,7 +64,7 @@ def api_key() -> str:
     """Exchange username/password for a session API key — burns 1 of 6 hourly slots."""
     assert USERNAME and PASSWORD  # _skip_no_creds guarantees this at collection time
     with Client(base_url=BASE_URL, max_retries=0) as c:
-        return c.login(int(USERNAME) if USERNAME.isdigit() else USERNAME, PASSWORD)
+        return c.login(USERNAME, PASSWORD)
 
 
 @pytest.fixture

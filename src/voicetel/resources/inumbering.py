@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Literal
+
 from ..models import (
     InventoryCoverageData,
     InventorySearchData,
@@ -11,7 +13,9 @@ from ..models import (
     PortSubmitData,
     PortSubmitRequest,
 )
-from ._base import AsyncResource, Resource, unwrap
+from ._base import AsyncResource, Resource, quote_path, unwrap
+
+InventoryCountBy = Literal["state", "city", "rateCenter", "npanxx", "block"]
 
 
 class INumberingResource(Resource):
@@ -20,41 +24,61 @@ class INumberingResource(Resource):
     def search_inventory(
         self,
         *,
-        npa: int | None = None,
-        nxx: int | None = None,
-        state: str | None = None,
-        ratecenter: str | None = None,
-        contains: str | None = None,
-        endswith: str | None = None,
-        limit: int | None = None,
+        tn_mask: str,
+        quantity: int | None = None,
+        province: str | None = None,
+        rate_center: str | None = None,
+        lata: str | None = None,
     ) -> InventorySearchData:
+        """GET /v2.2/inventory — search assignable TNs.
+
+        ``tn_mask`` (required) is a prefix or wildcard pattern (``201``, ``201555``,
+        ``201555*``). ``quantity`` is 1-1000 (server default 10).
+        """
         return InventorySearchData.model_validate(
             unwrap(
                 self._t.request(
                     "GET",
                     "/v2.2/inventory",
                     params={
-                        "npa": npa,
-                        "nxx": nxx,
-                        "state": state,
-                        "ratecenter": ratecenter,
-                        "contains": contains,
-                        "endswith": endswith,
-                        "limit": limit,
+                        "tnMask": tn_mask,
+                        "quantity": quantity,
+                        "province": province,
+                        "rateCenter": rate_center,
+                        "lata": lata,
                     },
                 )
             )
         )
 
     def coverage(
-        self, *, state: str | None = None, ratecenter: str | None = None
+        self,
+        *,
+        count_by: InventoryCountBy,
+        loc_state: str | None = None,
+        city: str | None = None,
+        rc_abbre: str | None = None,
+        npa: str | None = None,
+        lata: str | None = None,
     ) -> InventoryCoverageData:
+        """GET /v2.2/inventory/coverage — aggregated availability buckets.
+
+        ``count_by`` (required) selects the grouping: ``state``, ``city``,
+        ``rateCenter``, ``npanxx`` or ``block``.
+        """
         return InventoryCoverageData.model_validate(
             unwrap(
                 self._t.request(
                     "GET",
                     "/v2.2/inventory/coverage",
-                    params={"state": state, "ratecenter": ratecenter},
+                    params={
+                        "countBy": count_by,
+                        "locState": loc_state,
+                        "city": city,
+                        "rcAbbre": rc_abbre,
+                        "npa": npa,
+                        "lata": lata,
+                    },
                 )
             )
         )
@@ -67,9 +91,10 @@ class INumberingResource(Resource):
     def ports(self) -> PortListData:
         return PortListData.model_validate(unwrap(self._t.request("GET", "/v2.2/ports")))
 
-    def port(self, port_id: int) -> PortDetailData:
+    def port(self, port_id: str) -> PortDetailData:
+        """GET /v2.2/ports/{id} — ``port_id`` is the 5-character alphanumeric pid."""
         return PortDetailData.model_validate(
-            unwrap(self._t.request("GET", f"/v2.2/ports/{port_id}"))
+            unwrap(self._t.request("GET", f"/v2.2/ports/{quote_path(port_id)}"))
         )
 
     def submit_port(self, body: PortSubmitRequest) -> PortSubmitData:
@@ -79,7 +104,7 @@ class INumberingResource(Resource):
 
     def port_availability(self, number: str) -> PortAvailabilityData:
         return PortAvailabilityData.model_validate(
-            unwrap(self._t.request("GET", f"/v2.2/ports/availability/{number}"))
+            unwrap(self._t.request("GET", f"/v2.2/ports/availability/{quote_path(number)}"))
         )
 
 
@@ -87,41 +112,61 @@ class INumberingAsyncResource(AsyncResource):
     async def search_inventory(
         self,
         *,
-        npa: int | None = None,
-        nxx: int | None = None,
-        state: str | None = None,
-        ratecenter: str | None = None,
-        contains: str | None = None,
-        endswith: str | None = None,
-        limit: int | None = None,
+        tn_mask: str,
+        quantity: int | None = None,
+        province: str | None = None,
+        rate_center: str | None = None,
+        lata: str | None = None,
     ) -> InventorySearchData:
+        """GET /v2.2/inventory — search assignable TNs.
+
+        ``tn_mask`` (required) is a prefix or wildcard pattern (``201``, ``201555``,
+        ``201555*``). ``quantity`` is 1-1000 (server default 10).
+        """
         return InventorySearchData.model_validate(
             unwrap(
                 await self._t.request(
                     "GET",
                     "/v2.2/inventory",
                     params={
-                        "npa": npa,
-                        "nxx": nxx,
-                        "state": state,
-                        "ratecenter": ratecenter,
-                        "contains": contains,
-                        "endswith": endswith,
-                        "limit": limit,
+                        "tnMask": tn_mask,
+                        "quantity": quantity,
+                        "province": province,
+                        "rateCenter": rate_center,
+                        "lata": lata,
                     },
                 )
             )
         )
 
     async def coverage(
-        self, *, state: str | None = None, ratecenter: str | None = None
+        self,
+        *,
+        count_by: InventoryCountBy,
+        loc_state: str | None = None,
+        city: str | None = None,
+        rc_abbre: str | None = None,
+        npa: str | None = None,
+        lata: str | None = None,
     ) -> InventoryCoverageData:
+        """GET /v2.2/inventory/coverage — aggregated availability buckets.
+
+        ``count_by`` (required) selects the grouping: ``state``, ``city``,
+        ``rateCenter``, ``npanxx`` or ``block``.
+        """
         return InventoryCoverageData.model_validate(
             unwrap(
                 await self._t.request(
                     "GET",
                     "/v2.2/inventory/coverage",
-                    params={"state": state, "ratecenter": ratecenter},
+                    params={
+                        "countBy": count_by,
+                        "locState": loc_state,
+                        "city": city,
+                        "rcAbbre": rc_abbre,
+                        "npa": npa,
+                        "lata": lata,
+                    },
                 )
             )
         )
@@ -136,9 +181,10 @@ class INumberingAsyncResource(AsyncResource):
             unwrap(await self._t.request("GET", "/v2.2/ports"))
         )
 
-    async def port(self, port_id: int) -> PortDetailData:
+    async def port(self, port_id: str) -> PortDetailData:
+        """GET /v2.2/ports/{id} — ``port_id`` is the 5-character alphanumeric pid."""
         return PortDetailData.model_validate(
-            unwrap(await self._t.request("GET", f"/v2.2/ports/{port_id}"))
+            unwrap(await self._t.request("GET", f"/v2.2/ports/{quote_path(port_id)}"))
         )
 
     async def submit_port(self, body: PortSubmitRequest) -> PortSubmitData:
@@ -148,5 +194,9 @@ class INumberingAsyncResource(AsyncResource):
 
     async def port_availability(self, number: str) -> PortAvailabilityData:
         return PortAvailabilityData.model_validate(
-            unwrap(await self._t.request("GET", f"/v2.2/ports/availability/{number}"))
+            unwrap(
+                await self._t.request(
+                    "GET", f"/v2.2/ports/availability/{quote_path(number)}"
+                )
+            )
         )

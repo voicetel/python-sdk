@@ -54,6 +54,7 @@ include = ["src/voicetel", "README.md", "LICENSE"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 markers = [
     "integration: hits the live api.voicetel.com (requires VOICETEL_USERNAME and VOICETEL_PASSWORD env vars)",
 ]

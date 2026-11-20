@@ -12,7 +12,7 @@ from ._http import (
     Transport,
 )
 from .auth import aexchange_api_key, exchange_api_key
-from .resources import (
+from .resources import(
     AccountAsyncResource,
     AccountResource,
     AclAsyncResource,
@@ -21,6 +21,8 @@ from .resources import (
     AuthenticationResource,
     E911AsyncResource,
     E911Resource,
+    FaxAsyncResource,
+    FaxResource,
     GatewaysAsyncResource,
     GatewaysResource,
     INumberingAsyncResource,
@@ -68,6 +70,7 @@ class Client:
         self.acl = AclResource(self._transport)
         self.authentication = AuthenticationResource(self._transport)
         self.e911 = E911Resource(self._transport)
+        self.fax = FaxResource(self._transport)
         self.gateways = GatewaysResource(self._transport)
         self.inumbering = INumberingResource(self._transport)
         self.lookups = LookupsResource(self._transport)
@@ -126,6 +129,7 @@ class AsyncClient:
         self.acl = AclAsyncResource(self._transport)
         self.authentication = AuthenticationAsyncResource(self._transport)
         self.e911 = E911AsyncResource(self._transport)
+        self.fax = FaxAsyncResource(self._transport)
         self.gateways = GatewaysAsyncResource(self._transport)
         self.inumbering = INumberingAsyncResource(self._transport)
         self.lookups = LookupsAsyncResource(self._transport)

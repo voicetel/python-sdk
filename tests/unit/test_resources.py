@@ -263,12 +263,13 @@ def test_acl_add_and_remove(client: Client, mock_router: respx.Router) -> None:
     )
     a = client.acl.add(body)
     assert a.added[0].cidr == "203.0.113.0/24"
-    # DELETE /v2.2/acl takes a required comma-separated `cidrs` query param — no body.
-    r = client.acl.remove(cidrs=["203.0.113.0/24", "203.0.113.1/32"])
+    # v2.2.21: DELETE /v2.2/acl takes the same {acl: [...]} body as POST — no query params.
+    r = client.acl.remove(AclModifyRequest(acl=[CidrEntry(cidr="203.0.113.0/24"), CidrEntry(cidr="203.0.113.1/32")]))
     assert r.removed[0].cidr == "203.0.113.0/24"
     sent = delete_route.calls.last.request
-    assert "cidrs=203.0.113.0%2F24%2C203.0.113.1%2F32" in str(sent.url)
-    assert not sent.content
+    import json as _json
+    assert _json.loads(sent.content) == {"acl": [{"cidr": "203.0.113.0/24"}, {"cidr": "203.0.113.1/32"}]}
+    assert not sent.url.params
 
 
 # ------------------------------------------------------------------- Auth ---
@@ -1561,7 +1562,7 @@ async def test_async_full_resource_surface(mock_router: respx.Router) -> None:
     async with AsyncClient(api_key="k", base_url=BASE, max_retries=0) as c:
         await c.acl.list()
         await c.acl.add(AclModifyRequest(acl=[CidrEntry(cidr="203.0.113.0/24")]))
-        await c.acl.remove(cidrs=["203.0.113.0/24"])
+        await c.acl.remove(AclModifyRequest(acl=[CidrEntry(cidr="203.0.113.0/24")]))
         await c.authentication.get()
         await c.authentication.update(AuthPutRequest(authType=1))
         await c.e911.list()

@@ -17,12 +17,10 @@ class AclResource(Resource):
             unwrap(self._t.request("POST", "/v2.2/acl", json=body.to_payload()))
         )
 
-    def remove(self, *, cidrs: Sequence[str]) -> AclRemoveData:
-        """DELETE /v2.2/acl — remove CIDR entries via the required ``cidrs`` query param."""
+    def remove(self, body: AclModifyRequest) -> AclRemoveData:
+        """DELETE /v2.2/acl — remove CIDR entries with the same {acl: [...]} body as add."""
         return AclRemoveData.model_validate(
-            unwrap(
-                self._t.request("DELETE", "/v2.2/acl", params={"cidrs": ",".join(cidrs)})
-            )
+            unwrap(self._t.request("DELETE", "/v2.2/acl", json=body.to_payload()))
         )
 
 
@@ -35,12 +33,8 @@ class AclAsyncResource(AsyncResource):
             unwrap(await self._t.request("POST", "/v2.2/acl", json=body.to_payload()))
         )
 
-    async def remove(self, *, cidrs: Sequence[str]) -> AclRemoveData:
-        """DELETE /v2.2/acl — remove CIDR entries via the required ``cidrs`` query param."""
+    async def remove(self, body: AclModifyRequest) -> AclRemoveData:
+        """DELETE /v2.2/acl — remove CIDR entries with the same {acl: [...]} body as add."""
         return AclRemoveData.model_validate(
-            unwrap(
-                await self._t.request(
-                    "DELETE", "/v2.2/acl", params={"cidrs": ",".join(cidrs)}
-                )
-            )
+            unwrap(await self._t.request("DELETE", "/v2.2/acl", json=body.to_payload()))
         )

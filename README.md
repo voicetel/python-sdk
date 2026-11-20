@@ -2,7 +2,7 @@
 
 The official Python client for the [VoiceTel REST API](https://voicetel.com/docs/api/v2.2/) — provision numbers, place orders, validate e911, send messages, and manage your account, all with type-safe, async-ready Python.
 
-![Version](https://img.shields.io/badge/version-2.2.20-blue)
+![Version](https://img.shields.io/badge/version-2.2.21-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)
@@ -27,7 +27,7 @@ The official Python client for the [VoiceTel REST API](https://voicetel.com/docs
 ## ✨ Features
 
 ### 🛡️ Strongly Typed End-to-End
-- **Pydantic v2 models** for every one of the 83 API operations — request bodies validated before they leave your machine, responses validated when they arrive.
+- **Pydantic v2 models** for every one of the 88 API operations — request bodies validated before they leave your machine, responses validated when they arrive.
 - **mypy-strict clean.** Full type coverage, including async, generics, and discriminated unions.
 - **Autocomplete everywhere.** Your IDE knows the shape of every field — no more guessing what's in `result["data"]["numbers"]`.
 
@@ -124,6 +124,7 @@ with Client() as c:
 | `client.acl` | IP allowlist (CIDR entries) | `c.acl.add(AclModifyRequest(acl=[...]))` |
 | `client.authentication` | SIP/HTTP auth mode + password | `c.authentication.update(AuthPutRequest(authType=1))` |
 | `client.e911` | Records, address validation, provisioning | `c.e911.validate(E911AddressRequest(...))` |
+| `client.fax` | Send faxes (multipart, idempotent), history, PDF download | `c.fax.send(from_number="2015550123", to_number="2125550123", documents=[FaxDocument.pdf("c.pdf", data)])` |
 | `client.gateways` | Termination routes | `c.gateways.list()` |
 | `client.inumbering` | Inventory, orders, port-ins | `c.inumbering.search_inventory(tn_mask="201")` |
 | `client.lookups` | CNAM, carrier & line type, LRN dips | `c.lookups.carrier("2015550123")` |

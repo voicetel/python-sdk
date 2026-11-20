@@ -58,6 +58,16 @@ from .authentication import (
     AuthUpdatedField,
 )
 from .common import CidrEntry, ErrorObject, ErrorResponse
+from .fax import (
+    FaxDocumentMeta,
+    FaxHistoryData,
+    FaxHistoryStatusFilter,
+    FaxJob,
+    FaxJobStatus,
+    FaxNumberEntry,
+    FaxNumbersData,
+    FaxSendData,
+)
 from .e911 import (
     E911AddressRequest,
     E911AllData,
@@ -265,6 +275,14 @@ __all__ = [
     "E911RecordData",
     "E911ValidateData",
     "E911ValidatedAddress",
+    "FaxDocumentMeta",
+    "FaxHistoryData",
+    "FaxHistoryStatusFilter",
+    "FaxJob",
+    "FaxJobStatus",
+    "FaxNumberEntry",
+    "FaxNumbersData",
+    "FaxSendData",
     "ErrorObject",
     "ErrorResponse",
     # gateways

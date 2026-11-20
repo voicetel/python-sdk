@@ -65,10 +65,14 @@ class Transport:
         params: dict[str, Any] | None = None,
         json: Any = None,
         require_auth: bool = True,
+        data: dict[str, str] | None = None,
+        files: list[tuple[str, tuple[str, bytes, str]]] | None = None,
+        idempotency_key: str | None = None,
+        raw: bool = False,
     ) -> Any:
         headers = self._headers(require_auth=require_auth)
         if method.upper() in ("POST", "PUT", "PATCH"):
-            headers["Idempotency-Key"] = str(uuid.uuid4())
+            headers["Idempotency-Key"] = idempotency_key or str(uuid.uuid4())
         last_exc: Exception | None = None
         for attempt in range(self._max_retries + 1):
             try:
@@ -77,6 +81,8 @@ class Transport:
                     path,
                     params=_clean_params(params),
                     json=json,
+                    data=data,
+                    files=files,
                     headers=headers,
                 )
             except httpx.TransportError as exc:
@@ -91,7 +97,7 @@ class Transport:
             if response.status_code in _RETRYABLE_STATUSES and attempt < self._max_retries:
                 _sleep_backoff(attempt, response)
                 continue
-            return _parse(response)
+            return response.content if raw else _parse(response)
         # unreachable: the loop always returns or raises
         assert last_exc is not None  # pragma: no cover
         raise last_exc  # pragma: no cover
@@ -164,10 +170,14 @@ class AsyncTransport:
         params: dict[str, Any] | None = None,
         json: Any = None,
         require_auth: bool = True,
+        data: dict[str, str] | None = None,
+        files: list[tuple[str, tuple[str, bytes, str]]] | None = None,
+        idempotency_key: str | None = None,
+        raw: bool = False,
     ) -> Any:
         headers = self._headers(require_auth=require_auth)
         if method.upper() in ("POST", "PUT", "PATCH"):
-            headers["Idempotency-Key"] = str(uuid.uuid4())
+            headers["Idempotency-Key"] = idempotency_key or str(uuid.uuid4())
         last_exc: Exception | None = None
         for attempt in range(self._max_retries + 1):
             try:
@@ -176,6 +186,8 @@ class AsyncTransport:
                     path,
                     params=_clean_params(params),
                     json=json,
+                    data=data,
+                    files=files,
                     headers=headers,
                 )
             except httpx.TransportError as exc:
@@ -190,7 +202,7 @@ class AsyncTransport:
             if response.status_code in _RETRYABLE_STATUSES and attempt < self._max_retries:
                 await asyncio.sleep(_backoff_delay(attempt, response))
                 continue
-            return _parse(response)
+            return response.content if raw else _parse(response)
         assert last_exc is not None  # pragma: no cover
         raise last_exc  # pragma: no cover
 

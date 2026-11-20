@@ -5,6 +5,7 @@ from .account import AccountAsyncResource, AccountResource
 from .acl import AclAsyncResource, AclResource
 from .authentication import AuthenticationAsyncResource, AuthenticationResource
 from .e911 import E911AsyncResource, E911Resource
+from .fax import FaxAsyncResource, FaxDocument, FaxResource
 from .gateways import GatewaysAsyncResource, GatewaysResource
 from .inumbering import INumberingAsyncResource, INumberingResource
 from .lookups import LookupsAsyncResource, LookupsResource
@@ -22,6 +23,9 @@ __all__ = [
     "AuthenticationResource",
     "E911AsyncResource",
     "E911Resource",
+    "FaxAsyncResource",
+    "FaxDocument",
+    "FaxResource",
     "GatewaysAsyncResource",
     "GatewaysResource",
     "INumberingAsyncResource",

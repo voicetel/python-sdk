@@ -13,7 +13,7 @@ from .common import CidrEntry
 
 
 class AclModifyRequest(_Base):
-    """Body for POST /v2.2/acl (add). DELETE /v2.2/acl takes a ``cidrs`` query parameter instead."""
+    """Body for POST and DELETE /v2.2/acl — both take the same {acl: [...]} body."""
 
     acl: list[CidrEntry] = Field(description="CIDR entries to add.")
 

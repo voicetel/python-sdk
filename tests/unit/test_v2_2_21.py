@@ -244,3 +244,15 @@ def test_error_kinds_402_413(client: Client, mock_router: respx.Router) -> None:
         raise AssertionError("expected RequestTooLargeError")
     except RequestTooLargeError as exc:
         assert exc.status_code == 413
+
+
+def test_lrn_dip_null_lrn(client: Client, mock_router: respx.Router) -> None:
+    """A failed LRN dip is 200 with lrn:null — the model must accept it."""
+    mock_router.get("/v2.2/lrn/2015550123/2015550100").mock(
+        return_value=httpx.Response(
+            200, json=env({"ani": "2015550100", "destination": "2015550123", "lrn": None})
+        )
+    )
+    result = client.lookups.lrn("2015550123", "2015550100")
+    assert result.lrn is None
+    assert result.ani == "2015550100"

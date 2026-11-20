@@ -67,4 +67,7 @@ class LrnLookupData(_Base):
 
     ani: PhoneNumber = Field(description="The presented ANI (passed in for billing/auth).")
     destination: PhoneNumber = Field(description="The dipped TN.")
-    lrn: LrnData = Field(description="LRN data for the dipped TN.")
+    lrn: LrnData | None = Field(
+        default=None,
+        description="LRN data for the dipped TN, or null when the dip returned no record.",
+    )

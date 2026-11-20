@@ -201,3 +201,46 @@ async def test_fax_async(mock_router: respx.Router) -> None:
         assert nums.numbers == []
         doc = await c.fax.document("9f8c2b41a")
         assert doc == b"%PDF-"
+
+
+def test_error_kinds_402_413(client: Client, mock_router: respx.Router) -> None:
+    """v2.2.21: 402 (balance) and 413 (upload size) map to typed errors."""
+    from voicetel import PaymentRequiredError, RequestTooLargeError
+
+    mock_router.post("/v2.2/faxes").mock(
+        return_value=httpx.Response(
+            402,
+            json={
+                "status": "error",
+                "error": {"code": 402, "message": "Your account needs a positive balance to send faxes."},
+                "serverTime": 1795100000,
+            },
+        )
+    )
+    try:
+        client.fax.send(
+            from_number="2015550123", to_number="2125550123",
+            documents=[FaxDocument.pdf("a.pdf", b"%PDF-")],
+        )
+        raise AssertionError("expected PaymentRequiredError")
+    except PaymentRequiredError as exc:
+        assert exc.status_code == 402
+
+    mock_router.post("/v2.2/faxes").mock(
+        return_value=httpx.Response(
+            413,
+            json={
+                "status": "error",
+                "error": {"code": 413, "message": "The documents must total 8 MiB or smaller"},
+                "serverTime": 1795100000,
+            },
+        )
+    )
+    try:
+        client.fax.send(
+            from_number="2015550123", to_number="2125550123",
+            documents=[FaxDocument.pdf("a.pdf", b"%PDF-")],
+        )
+        raise AssertionError("expected RequestTooLargeError")
+    except RequestTooLargeError as exc:
+        assert exc.status_code == 413

@@ -50,6 +50,18 @@ class PermissionDeniedError(ApiError):
     """HTTP 403 — authenticated, but not allowed to perform this action."""
 
 
+class PaymentRequiredError(ApiError):
+    """HTTP 402 — the account balance must be positive for this action.
+
+    Returned by POST /v2.2/faxes and PUT /v2.2/numbers/{number}/directory-listing
+    when the balance is not positive.
+    """
+
+
+class RequestTooLargeError(ApiError):
+    """HTTP 413 — the upload is too large (fax documents must total 8 MiB or smaller)."""
+
+
 class NotFoundError(ApiError):
     """HTTP 404 — the resource does not exist."""
 
@@ -78,12 +90,16 @@ def from_response(status_code: int, code: int | str | None, body: Any, message: 
         cls = BadRequestError
     elif status_code == 401:
         cls = AuthenticationError
+    elif status_code == 402:
+        cls = PaymentRequiredError
     elif status_code == 403:
         cls = PermissionDeniedError
     elif status_code == 404:
         cls = NotFoundError
     elif status_code == 409:
         cls = ConflictError
+    elif status_code == 413:
+        cls = RequestTooLargeError
     elif status_code == 429:
         cls = RateLimitError
     elif 500 <= status_code < 600:

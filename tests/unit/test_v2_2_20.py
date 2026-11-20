@@ -309,6 +309,56 @@ async def test_directory_listing_async(mock_router: respx.Router) -> None:
     assert result.listing is None
 
 
+@pytest.mark.asyncio
+async def test_directory_listing_async_writes(mock_router: respx.Router) -> None:
+    mock_router.put("/v2.2/numbers/2015550123/directory-listing").mock(
+        return_value=httpx.Response(
+            202, json=env({"number": "2015550123", "status": "pending", "orderId": "1026472"})
+        )
+    )
+    mock_router.delete("/v2.2/numbers/2015550123/directory-listing").mock(
+        return_value=httpx.Response(
+            202, json=env({"number": "2015550123", "status": "removing", "orderId": "1026473"})
+        )
+    )
+    async with AsyncClient(api_key="a" * 32, base_url=BASE, max_retries=0) as c:
+        put = await c.numbers.set_directory_listing(
+            "2015550123",
+            DirectoryListingRequest(
+                type="business",
+                name="Acme Corp",
+                streetNumber="100",
+                streetName="Broadway",
+                streetType="St",
+                location="Suite 900",
+                city="New York",
+                state="NY",
+                zip="10005",
+            ),
+        )
+        assert put.status == "pending"
+        deleted = await c.numbers.remove_directory_listing("2015550123")
+        assert deleted.status == "removing"
+
+
+@pytest.mark.asyncio
+async def test_lookups_carrier_async(mock_router: respx.Router) -> None:
+    mock_router.get("/v2.2/carrier/2015550123").mock(
+        return_value=httpx.Response(
+            200,
+            json=env(
+                {
+                    "number": "2015550123",
+                    "carrier": {"name": "EXAMPLE CARRIER", "type": "voip"},
+                }
+            ),
+        )
+    )
+    async with AsyncClient(api_key="a" * 32, base_url=BASE, max_retries=0) as c:
+        result = await c.lookups.carrier("2015550123")
+    assert result.carrier.name == "EXAMPLE CARRIER"
+
+
 def json_body(route: respx.Route) -> dict[str, Any]:
     import json as _json
 

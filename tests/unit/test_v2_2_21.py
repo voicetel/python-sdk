@@ -11,7 +11,6 @@ Covers:
 
 from __future__ import annotations
 
-import json
 import re
 
 import httpx
@@ -103,7 +102,16 @@ def test_fax_send_generates_uuid_idempotency_key(
 ) -> None:
     route = mock_router.post("/v2.2/faxes").mock(
         return_value=httpx.Response(
-            201, json=env({"id": "x", "fromNumber": "2015550123", "toNumber": "2125550123", "status": "queued", "documents": []})
+            201,
+            json=env(
+                {
+                    "id": "x",
+                    "fromNumber": "2015550123",
+                    "toNumber": "2125550123",
+                    "status": "queued",
+                    "documents": [],
+                }
+            ),
         )
     )
     client.fax.send(
@@ -133,7 +141,12 @@ def test_fax_history(client: Client, mock_router: respx.Router) -> None:
         )
     )
     result = client.fax.history(
-        number="2015550123", from_ts=1795100000, to_ts=1795013600, limit=50, status="all"
+        number="2015550123",
+        from_ts=1795100000,
+        to_ts=1795013600,
+        limit=50,
+        status="all",
+        cursor="cur1",
     )
     assert isinstance(result, FaxHistoryData)
     assert result.faxes[0].status == "sent"
@@ -143,6 +156,14 @@ def test_fax_history(client: Client, mock_router: respx.Router) -> None:
     assert q["number"] == "2015550123"
     assert q["from"] == "1795100000" and q["to"] == "1795013600"
     assert q["limit"] == "50" and q["status"] == "all"
+    assert q["cursor"] == "cur1"
+
+    # No optional filters — exercise the None branches.
+    bare = client.fax.history(number="2015550123")
+    assert isinstance(bare, FaxHistoryData)
+    qb = route.calls.last.request.url.params
+    assert "from" not in qb and "to" not in qb and "limit" not in qb
+    assert "cursor" not in qb and "status" not in qb
 
 
 def test_fax_get_and_document(client: Client, mock_router: respx.Router) -> None:
@@ -201,6 +222,62 @@ async def test_fax_async(mock_router: respx.Router) -> None:
         assert nums.numbers == []
         doc = await c.fax.document("9f8c2b41a")
         assert doc == b"%PDF-"
+
+
+@pytest.mark.asyncio
+async def test_fax_async_send_history_get(mock_router: respx.Router) -> None:
+    mock_router.post("/v2.2/faxes").mock(
+        return_value=httpx.Response(
+            201,
+            json=env(
+                {
+                    "id": "9f8c2b41a",
+                    "fromNumber": "2015550123",
+                    "toNumber": "2125550123",
+                    "status": "queued",
+                    "documents": [],
+                }
+            ),
+        )
+    )
+    mock_router.get("/v2.2/faxes").mock(
+        return_value=httpx.Response(
+            200,
+            json=env(
+                {
+                    "number": "2015550123",
+                    "fromTs": 1795100000,
+                    "toTs": 1795013600,
+                    "faxes": [],
+                    "nextCursor": None,
+                }
+            ),
+        )
+    )
+    mock_router.get("/v2.2/faxes/9f8c2b41a").mock(
+        return_value=httpx.Response(200, json=env(JOB))
+    )
+    async with AsyncClient(api_key="a" * 32, base_url=BASE, max_retries=0) as c:
+        sent = await c.fax.send(
+            from_number="2015550123",
+            to_number="2125550123",
+            documents=[FaxDocument.pdf("a.pdf", b"%PDF-")],
+        )
+        assert sent.id == "9f8c2b41a"
+        assert sent.status == "queued"
+        hist = await c.fax.history(number="2015550123")
+        assert hist.faxes == []
+        hist2 = await c.fax.history(
+            number="2015550123",
+            from_ts=1795100000,
+            to_ts=1795013600,
+            limit=50,
+            cursor="cur1",
+            status="all",
+        )
+        assert hist2.faxes == []
+        job = await c.fax.get("9f8c2b41a")
+        assert job.status == "sent"
 
 
 def test_error_kinds_402_413(client: Client, mock_router: respx.Router) -> None:

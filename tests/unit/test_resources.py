@@ -264,7 +264,9 @@ def test_acl_add_and_remove(client: Client, mock_router: respx.Router) -> None:
     a = client.acl.add(body)
     assert a.added[0].cidr == "203.0.113.0/24"
     # v2.2.21: DELETE /v2.2/acl takes the same {acl: [...]} body as POST — no query params.
-    r = client.acl.remove(AclModifyRequest(acl=[CidrEntry(cidr="203.0.113.0/24"), CidrEntry(cidr="203.0.113.1/32")]))
+    r = client.acl.remove(
+        AclModifyRequest(acl=[CidrEntry(cidr="203.0.113.0/24"), CidrEntry(cidr="203.0.113.1/32")])
+    )
     assert r.removed[0].cidr == "203.0.113.0/24"
     sent = delete_route.calls.last.request
     import json as _json
@@ -384,7 +386,8 @@ def test_e911_full_surface(client: Client, mock_router: respx.Router) -> None:
     got = client.e911.get("2015550123")
     assert got.record.dn == "12015550123"
     provisioned = client.e911.provision(
-        "2015550123", E911ProvisionByIdRequest(callername="ACME", addressid="123a45b678c9d012e3f45a67b890c123")
+        "2015550123",
+        E911ProvisionByIdRequest(callername="ACME", addressid="123a45b678c9d012e3f45a67b890c123"),
     )
     assert provisioned.record.dn == "12015550123"
     assert client.e911.remove("2015550123") is None
@@ -1229,7 +1232,15 @@ async def test_async_full_resource_surface(mock_router: respx.Router) -> None:
         return_value=httpx.Response(
             200,
             json=env(
-                {"address": {"addressid": "123a45b678c9d012e3f45a67b890c123", "address1": "1", "city": "C", "state": "NJ", "zip": "07082"}}
+                {
+                    "address": {
+                        "addressid": "123a45b678c9d012e3f45a67b890c123",
+                        "address1": "1",
+                        "city": "C",
+                        "state": "NJ",
+                        "zip": "07082",
+                    }
+                }
             ),
         )
     )

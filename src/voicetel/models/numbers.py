@@ -18,7 +18,8 @@ class NumberAddRequest(_Base):
     route: int | None = Field(
         default=None,
         description="A gateway id on this account (GET /v2.2/gateways) or a global route: "
-        "1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), 5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. Used when adding a number.",
+        "1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), 5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. "
+        "Used when adding a number.",
     )
 
 
@@ -27,7 +28,8 @@ class NumberRouteRequest(_Base):
 
     route: int = Field(
         description="A gateway id on this account (GET /v2.2/gateways) or a global route: "
-        "1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), 5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. Set with PUT /v2.2/numbers/{number}/route.",
+        "1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), 5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. "
+        "Set with PUT /v2.2/numbers/{number}/route.",
     )
 
 
@@ -258,7 +260,8 @@ class NumberDetail(_Base):
     )
     route: int = Field(
         description="A gateway id on this account (GET /v2.2/gateways) or a global route: "
-        "1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), 5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. Per-number route in the list.",
+        "1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), 5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. "
+        "Per-number route in the list.",
     )
     gateway: str | None = Field(
         default=None,
@@ -347,7 +350,8 @@ class NumberAddData(_Base):
     number: PhoneNumber
     route: int = Field(
         description="A gateway id on this account (GET /v2.2/gateways) or a global route: "
-        "1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), 5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. Returned after adding a number.",
+        "1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), 5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. "
+        "Returned after adding a number.",
     )
 
 
@@ -406,7 +410,8 @@ class NumberMoveData(_Base):
     accountId: int = Field(description="Destination account the number was moved to.")
     route: int = Field(
         description="A gateway id on this account (GET /v2.2/gateways) or a global route: "
-        "1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), 5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. Route on the destination account after the move.",
+        "1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), 5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. "
+        "Route on the destination account after the move.",
     )
 
 
@@ -416,7 +421,8 @@ class NumberRouteData(_Base):
     number: PhoneNumber
     route: int = Field(
         description="A gateway id on this account (GET /v2.2/gateways) or a global route: "
-        "1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), 5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. Echo of the applied route.",
+        "1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), 5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. "
+        "Echo of the applied route.",
     )
 
 

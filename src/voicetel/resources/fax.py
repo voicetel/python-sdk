@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import uuid as _uuid
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
 
 from ..models import (
     FaxHistoryData,
     FaxHistoryStatusFilter,
     FaxJob,
-    FaxSendData,
     FaxNumbersData,
+    FaxSendData,
 )
 from ._base import AsyncResource, Resource, quote_path, unwrap
 
@@ -29,7 +29,7 @@ class FaxDocument:
     content_type: str = "application/pdf"
 
     @classmethod
-    def pdf(cls, name: str, content: bytes) -> "FaxDocument":
+    def pdf(cls, name: str, content: bytes) -> FaxDocument:
         return cls(name=name, content=content, content_type="application/pdf")
 
 
@@ -109,8 +109,11 @@ class FaxResource(Resource):
 
     def document(self, fax_id: str) -> bytes:
         """GET /v2.2/faxes/{id}/document — the fax PDF as raw bytes."""
-        return self._t.request(
-            "GET", f"/v2.2/faxes/{quote_path(fax_id)}/document", raw=True
+        return cast(
+            bytes,
+            self._t.request(
+                "GET", f"/v2.2/faxes/{quote_path(fax_id)}/document", raw=True
+            ),
         )
 
 
@@ -174,6 +177,9 @@ class FaxAsyncResource(AsyncResource):
         )
 
     async def document(self, fax_id: str) -> bytes:
-        return await self._t.request(
-            "GET", f"/v2.2/faxes/{quote_path(fax_id)}/document", raw=True
+        return cast(
+            bytes,
+            await self._t.request(
+                "GET", f"/v2.2/faxes/{quote_path(fax_id)}/document", raw=True
+            ),
         )

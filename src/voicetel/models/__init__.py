@@ -58,16 +58,6 @@ from .authentication import (
     AuthUpdatedField,
 )
 from .common import CidrEntry, ErrorObject, ErrorResponse
-from .fax import (
-    FaxDocumentMeta,
-    FaxHistoryData,
-    FaxHistoryStatusFilter,
-    FaxJob,
-    FaxJobStatus,
-    FaxNumberEntry,
-    FaxNumbersData,
-    FaxSendData,
-)
 from .e911 import (
     E911AddressRequest,
     E911AllData,
@@ -77,6 +67,16 @@ from .e911 import (
     E911RecordData,
     E911ValidatedAddress,
     E911ValidateData,
+)
+from .fax import (
+    FaxDocumentMeta,
+    FaxHistoryData,
+    FaxHistoryStatusFilter,
+    FaxJob,
+    FaxJobStatus,
+    FaxNumberEntry,
+    FaxNumbersData,
+    FaxSendData,
 )
 from .gateways import (
     GatewayAddRequest,
@@ -93,10 +93,10 @@ from .inumbering import (
     InventorySearchData,
     NameType,
     OrderCreateData,
-    OrderRoute,
     OrderCreateRequest,
     OrderFailedEntry,
     OrderNumberSpec,
+    OrderRoute,
     PortAvailabilityData,
     PortDetail,
     PortDetailData,
@@ -136,6 +136,9 @@ from .numbers import (
     CampaignAssignStatus,
     CampaignBinding,
     CampaignUnassignFailure,
+    DirectoryListing,
+    DirectoryListingData,
+    DirectoryListingRequest,
     MessagingEnablementJob,
     MessagingEnablementJobState,
     MessagingNetwork,
@@ -146,9 +149,6 @@ from .numbers import (
     NumberCnamData,
     NumberCnamRequest,
     NumberDetail,
-    DirectoryListing,
-    DirectoryListingData,
-    DirectoryListingRequest,
     NumberFaxData,
     NumberFaxRequest,
     NumberForwardData,
@@ -250,13 +250,13 @@ __all__ = [
     "CampaignRegistrationResult",
     "CampaignStatusItem",
     "CampaignUnassignFailure",
+    # lookups
+    "CarrierData",
+    "CarrierInfo",
     "CdrEntry",
     "CdrEntryValue",
     # common
     "CidrEntry",
-    # lookups
-    "CarrierData",
-    "CarrierInfo",
     "CnamData",
     # support
     "ConversationEmbedded",
@@ -266,6 +266,9 @@ __all__ = [
     "CustomerContactEntry",
     "CustomerEmbedded",
     "CustomerWebsiteEntry",
+    "DirectoryListing",
+    "DirectoryListingData",
+    "DirectoryListingRequest",
     # e911
     "E911AddressRequest",
     "E911AllData",
@@ -275,6 +278,8 @@ __all__ = [
     "E911RecordData",
     "E911ValidateData",
     "E911ValidatedAddress",
+    "ErrorObject",
+    "ErrorResponse",
     "FaxDocumentMeta",
     "FaxHistoryData",
     "FaxHistoryStatusFilter",
@@ -283,8 +288,6 @@ __all__ = [
     "FaxNumberEntry",
     "FaxNumbersData",
     "FaxSendData",
-    "ErrorObject",
-    "ErrorResponse",
     # gateways
     "GatewayAddRequest",
     "GatewayEntry",
@@ -323,9 +326,6 @@ __all__ = [
     "NumberCampaignAssignRequest",
     "NumberCnamData",
     "NumberCnamRequest",
-    "DirectoryListing",
-    "DirectoryListingData",
-    "DirectoryListingRequest",
     "NumberDetail",
     "NumberFaxData",
     "NumberFaxRequest",
@@ -351,10 +351,10 @@ __all__ = [
     "NumbersMessagingCampaignUnassignData",
     "NumbersMessagingListData",
     "OrderCreateData",
-    "OrderRoute",
     "OrderCreateRequest",
     "OrderFailedEntry",
     "OrderNumberSpec",
+    "OrderRoute",
     "PaymentEntry",
     "PaymentStatus",
     # base

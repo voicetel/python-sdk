@@ -3,14 +3,14 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from ..models import (
+    DirectoryListingData,
+    DirectoryListingRequest,
     NumberAddData,
     NumberAddRequest,
     NumberCampaignAssignRequest,
     NumberCnamData,
     NumberCnamRequest,
     NumberDetail,
-    DirectoryListingData,
-    DirectoryListingRequest,
     NumberFaxData,
     NumberFaxRequest,
     NumberForwardData,

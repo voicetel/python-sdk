@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
-
 from ..models import AclAddData, AclListData, AclModifyRequest, AclRemoveData
 from ._base import AsyncResource, Resource, unwrap
 

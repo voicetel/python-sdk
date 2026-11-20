@@ -12,7 +12,7 @@ from ._http import (
     Transport,
 )
 from .auth import aexchange_api_key, exchange_api_key
-from .resources import(
+from .resources import (
     AccountAsyncResource,
     AccountResource,
     AclAsyncResource,

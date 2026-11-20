@@ -47,7 +47,7 @@ class E911ProvisionByIdRequest(_Base):
     """PUT /v2.2/e911/{dn} — provision using a previously-validated addressId."""
 
     callername: str
-    addressid: int = Field(description="From POST /v2.2/e911/validations.")
+    addressid: str = Field(description="From POST /v2.2/e911/validations (hex string).")
 
 
 # -------------------------------------------------- entities & data shapes ---
@@ -71,7 +71,7 @@ class E911ValidatedAddress(_Base):
     ``addressid`` is passed to :class:`E911ProvisionByIdRequest` to provision the address.
     """
 
-    addressid: int = Field(description="Upstream address ID.")
+    addressid: str = Field(description="Upstream address ID (hex string).")
     address1: str
     address2: str | None = None
     city: str

@@ -31,8 +31,9 @@ class OrderNumberSpec(_Base):
     number: PhoneNumber
     route: int | None = Field(
         default=None,
-        description="Global route type: 1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), "
-        "5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. Route for numbers in this order.",
+        description="A gateway id on this account (GET /v2.2/gateways) or a global route: "
+        "1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), 5 T38, 6 VOICEML, 8 SDN, "
+        "9 MOBILE. An unknown route fails the whole order.",
     )
 
 
@@ -175,12 +176,26 @@ class OrderFailedEntry(_Base):
     reason: str
 
 
+class OrderRoute(_Base):
+    """One row in :attr:`OrderCreateData.routes` — the route each ordered number
+    was placed on."""
+
+    number: PhoneNumber = Field(description="Telephone number (ten digits).")
+    route: int = Field(
+        description="Gateway id or global route the number was placed on.",
+    )
+
+
 class OrderCreateData(_Base):
     """Data payload from POST /v2.2/orders."""
 
     orderId: str
     amountCharged: float = Field(description="Amount deducted from the account balance.")
     numbersOrdered: list[str] = Field(description="Numbers inserted into the account on success.")
+    routes: list[OrderRoute] = Field(
+        default_factory=list,
+        description="The route each ordered number was placed on.",
+    )
     failed: list[OrderFailedEntry] = Field(default_factory=list)
 
 

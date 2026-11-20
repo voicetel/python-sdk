@@ -83,6 +83,7 @@ from .inumbering import (
     InventorySearchData,
     NameType,
     OrderCreateData,
+    OrderRoute,
     OrderCreateRequest,
     OrderFailedEntry,
     OrderNumberSpec,
@@ -99,7 +100,7 @@ from .inumbering import (
     PortSummary,
     StreetDirection,
 )
-from .lookups import CnamData, LrnData, LrnLookupData
+from .lookups import CarrierData, CarrierInfo, CnamData, LrnData, LrnLookupData
 from .messaging import (
     BrandRegistrationResult,
     CampaignDca,
@@ -135,6 +136,9 @@ from .numbers import (
     NumberCnamData,
     NumberCnamRequest,
     NumberDetail,
+    DirectoryListing,
+    DirectoryListingData,
+    DirectoryListingRequest,
     NumberFaxData,
     NumberFaxRequest,
     NumberForwardData,
@@ -241,6 +245,8 @@ __all__ = [
     # common
     "CidrEntry",
     # lookups
+    "CarrierData",
+    "CarrierInfo",
     "CnamData",
     # support
     "ConversationEmbedded",
@@ -299,6 +305,9 @@ __all__ = [
     "NumberCampaignAssignRequest",
     "NumberCnamData",
     "NumberCnamRequest",
+    "DirectoryListing",
+    "DirectoryListingData",
+    "DirectoryListingRequest",
     "NumberDetail",
     "NumberFaxData",
     "NumberFaxRequest",
@@ -324,6 +333,7 @@ __all__ = [
     "NumbersMessagingCampaignUnassignData",
     "NumbersMessagingListData",
     "OrderCreateData",
+    "OrderRoute",
     "OrderCreateRequest",
     "OrderFailedEntry",
     "OrderNumberSpec",

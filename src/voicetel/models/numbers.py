@@ -17,8 +17,8 @@ class NumberAddRequest(_Base):
     number: PhoneNumber = Field(description="10-digit TN to attach to the account.")
     route: int | None = Field(
         default=None,
-        description="Global route type: 1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), "
-        "5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. Used when adding a number.",
+        description="A gateway id on this account (GET /v2.2/gateways) or a global route: "
+        "1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), 5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. Used when adding a number.",
     )
 
 
@@ -26,8 +26,8 @@ class NumberRouteRequest(_Base):
     """PUT /v2.2/numbers/{number}/route."""
 
     route: int = Field(
-        description="Global route type: 1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), "
-        "5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. Set with PUT /v2.2/numbers/{number}/route.",
+        description="A gateway id on this account (GET /v2.2/gateways) or a global route: "
+        "1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), 5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. Set with PUT /v2.2/numbers/{number}/route.",
     )
 
 
@@ -118,6 +118,134 @@ class PortOutPinUpdateRequest(_Base):
     )
 
 
+# ------------------------------------------------------------- directory listing
+
+DirectoryListingType = Literal["B", "R"]
+DirectoryListingStatus = Literal["listed", "not_listed", "pending", "removing", "unavailable"]
+
+
+class DirectoryListing(_Base):
+    """A 411 directory listing as published (or, on PUT, as submitted).
+
+    ``type`` ``B`` carries the business name in ``name``; ``R`` carries
+    ``firstName`` / ``lastName``. ``complex`` marks a multi-line listing, which
+    is read-only through the API.
+    """
+
+    type: DirectoryListingType = Field(description="B (business) or R (residence).")
+    name: str | None = Field(default=None, description="Business name (type B).")
+    firstName: str | None = Field(default=None, description="Resident's first name (type R).")
+    lastName: str | None = Field(default=None, description="Resident's last name (type R).")
+    streetNumber: str | None = Field(default=None, description="Street number.")
+    streetName: str | None = Field(default=None, description="Street name.")
+    streetType: str | None = Field(default=None, description="Street type, e.g. St, Ave.")
+    streetSuffix: str | None = Field(
+        default=None, description="Street direction: N, S, E, W, NE, NW, SE or SW."
+    )
+    location: str | None = Field(default=None, description="Suite or unit.")
+    city: str | None = Field(default=None, description="City.")
+    state: str | None = Field(default=None, description="Two-letter US state or territory code.")
+    zip: str | None = Field(default=None, description="5-digit ZIP.")
+    complex: bool | None = Field(
+        default=None, description="True for a multi-line listing; read-only through the API."
+    )
+
+
+class DirectoryListingRequest(_Base):
+    """PUT /v2.2/numbers/{number}/directory-listing — add or replace the listing.
+
+    ``type`` is ``business`` or ``residence`` (``B`` / ``R`` shorthand accepted).
+    A business sets ``name``; a residence sets ``firstName`` and ``lastName``.
+    The street is optional — give ``streetNumber`` and ``streetName`` together,
+    or neither. ``city``, ``state`` and ``zip`` are required.
+    """
+
+    type: Literal["business", "residence", "B", "R"] = Field(
+        description="business or residence; the shorthand B and R is also accepted."
+    )
+    name: Annotated[
+        str | None,
+        Field(max_length=60, pattern=r"^[A-Za-z0-9 &'.,#/-]+$"),
+    ] = Field(default=None, description="Business name; required for business.")
+    firstName: Annotated[
+        str | None,
+        Field(max_length=30, pattern=r"^[A-Za-z0-9 &'.,#/-]+$"),
+    ] = Field(default=None, description="Resident's first name; required for residence.")
+    lastName: Annotated[
+        str | None,
+        Field(max_length=30, pattern=r"^[A-Za-z0-9 &'.,#/-]+$"),
+    ] = Field(default=None, description="Resident's last name; required for residence.")
+    streetNumber: Annotated[
+        str | None,
+        Field(max_length=10, pattern=r"^[0-9A-Za-z/-]{1,10}$"),
+    ] = Field(
+        default=None,
+        description="Up to 10 letters or digits; give it together with streetName, or neither.",
+    )
+    streetName: Annotated[
+        str | None,
+        Field(max_length=40, pattern=r"^[A-Za-z0-9 &'.,#/-]+$"),
+    ] = Field(default=None, description="Street name; give it together with streetNumber, or neither.")
+    streetType: Annotated[
+        str | None,
+        Field(max_length=10, pattern=r"^[A-Za-z.]{1,10}$"),
+    ] = Field(default=None, description="A word such as St, Ave or Rd.")
+    streetSuffix: Literal["", "N", "S", "E", "W", "NE", "NW", "SE", "SW"] | None = Field(
+        default=None, description="Street direction; requires a street name."
+    )
+    location: Annotated[
+        str | None,
+        Field(max_length=30, pattern=r"^[A-Za-z0-9 &'.,#/-]+$"),
+    ] = Field(default=None, description="Suite or unit; requires a street name.")
+    city: Annotated[
+        str,
+        Field(max_length=40, pattern=r"^[A-Za-z0-9 &'.,#/-]+$"),
+    ] = Field(description="City the listing is at.")
+    state: Literal[
+        "AL","AK","AZ","AR","CA","CO","CT","DE","DC","FL","GA","HI","ID","IL","IN",
+        "IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH",
+        "NJ","NM","NY","NC","ND","OH","OK","OR","PA","PR","RI","SC","SD","TN","TX",
+        "UT","VT","VA","WA","WV","WI","WY","VI","GU","AS","MP",
+    ] = Field(description="Two-letter US state or territory code.")
+    zip: Annotated[
+        str,
+        Field(pattern=r"^[0-9]{5}(-?[0-9]{4})?$"),
+    ] = Field(description="5-digit ZIP (a ZIP+4 is accepted and stored as the 5-digit ZIP).")
+
+
+class DirectoryListingData(_Base):
+    """Data payload from GET/PUT/DELETE /v2.2/numbers/{number}/directory-listing.
+
+    PUT and DELETE are accepted (202) and applied in the background: ``status``
+    is ``pending`` / ``removing`` (or ``not_listed`` when a pending add was
+    cancelled) and ``orderId`` carries the carrier order reference. GET reports
+    the state as published, with ``eligible`` telling whether a listing can be
+    added.
+    """
+
+    number: PhoneNumber
+    status: DirectoryListingStatus = Field(
+        description=(
+            "listed: published. not_listed: none. pending: an add or change is being "
+            "applied. removing: a removal is being applied. unavailable: the number "
+            "cannot be listed."
+        )
+    )
+    eligible: bool | None = Field(
+        default=None, description="Whether a listing can be added to this number (GET)."
+    )
+    listing: DirectoryListing | None = Field(
+        default=None, description="The published listing, or null."
+    )
+    pending: DirectoryListing | None = Field(
+        default=None, description="A submitted listing not yet published, or null."
+    )
+    orderId: str | None = Field(
+        default=None, description="Reference of the submitted change (PUT and DELETE), or null."
+    )
+
+
+
 # ------------------------------------------------------- entities & responses ---
 
 
@@ -129,8 +257,8 @@ class NumberDetail(_Base):
         description="Destination after translation rewrite — usually equals ``number``.",
     )
     route: int = Field(
-        description="Global route type: 1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), "
-        "5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. Per-number route in the list.",
+        description="A gateway id on this account (GET /v2.2/gateways) or a global route: "
+        "1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), 5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. Per-number route in the list.",
     )
     gateway: str | None = Field(
         default=None,
@@ -218,8 +346,8 @@ class NumberAddData(_Base):
 
     number: PhoneNumber
     route: int = Field(
-        description="Global route type: 1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), "
-        "5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. Returned after adding a number.",
+        description="A gateway id on this account (GET /v2.2/gateways) or a global route: "
+        "1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), 5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. Returned after adding a number.",
     )
 
 
@@ -277,8 +405,8 @@ class NumberMoveData(_Base):
     number: PhoneNumber
     accountId: int = Field(description="Destination account the number was moved to.")
     route: int = Field(
-        description="Global route type: 1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), "
-        "5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. Route on the destination account after the move.",
+        description="A gateway id on this account (GET /v2.2/gateways) or a global route: "
+        "1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), 5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. Route on the destination account after the move.",
     )
 
 
@@ -287,8 +415,8 @@ class NumberRouteData(_Base):
 
     number: PhoneNumber
     route: int = Field(
-        description="Global route type: 1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), "
-        "5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. Echo of the applied route.",
+        description="A gateway id on this account (GET /v2.2/gateways) or a global route: "
+        "1 USER, 2 T30, 3 VOICE_BRIDGE, 4 DID (default), 5 T38, 6 VOICEML, 8 SDN, 9 MOBILE. Echo of the applied route.",
     )
 
 

@@ -14,6 +14,33 @@ class CnamData(_Base):
     number: PhoneNumber = Field(description="The number that was queried.")
 
 
+class CarrierInfo(_Base):
+    """Carrier and line-type details, with the field names used by the underlying
+    carrier lookup (Twilio-style, hence ``snake_case`` on the wire)."""
+
+    name: str | None = Field(default=None, description="Carrier or network name.")
+    type: str | None = Field(
+        default=None, description="Line type, such as voip, landline or mobile."
+    )
+    mobile_country_code: str | None = Field(
+        default=None, description="Mobile country code, on mobile numbers."
+    )
+    mobile_network_code: str | None = Field(
+        default=None, description="Mobile network code, on mobile numbers."
+    )
+    error_code: int | None = Field(
+        default=None, description="Error code when carrier details could not be determined."
+    )
+
+
+class CarrierData(_Base):
+    """Data payload from GET /v2.2/carrier/{number}. Billed per lookup at the
+    account's CNAM rate, only when a result is returned."""
+
+    number: PhoneNumber = Field(description="The number that was queried.")
+    carrier: CarrierInfo = Field(description="Carrier and line-type details for the number.")
+
+
 class LrnData(_Base):
     """LRN dip result. Returned both as the top-level data on GET /v2.2/lrn (when no ANI is
     provided) and nested inside :class:`LrnLookupData` when the full ``/lrn/{n}/{ani}`` form

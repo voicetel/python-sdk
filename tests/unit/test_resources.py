@@ -347,7 +347,7 @@ def test_e911_full_surface(client: Client, mock_router: respx.Router) -> None:
             json=env(
                 {
                     "address": {
-                        "addressid": 1234567,
+                        "addressid": "123a45b678c9d012e3f45a67b890c123",
                         "address1": "1 Main",
                         "city": "Closter",
                         "state": "NJ",
@@ -379,11 +379,11 @@ def test_e911_full_surface(client: Client, mock_router: respx.Router) -> None:
     validated = client.e911.validate(
         E911AddressRequest(address1="1 Main", city="Closter", state="NJ", zip="07624")
     )
-    assert validated.address.addressid == 1234567
+    assert validated.address.addressid == "123a45b678c9d012e3f45a67b890c123"
     got = client.e911.get("2015550123")
     assert got.record.dn == "12015550123"
     provisioned = client.e911.provision(
-        "2015550123", E911ProvisionByIdRequest(callername="ACME", addressid=1234567)
+        "2015550123", E911ProvisionByIdRequest(callername="ACME", addressid="123a45b678c9d012e3f45a67b890c123")
     )
     assert provisioned.record.dn == "12015550123"
     assert client.e911.remove("2015550123") is None
@@ -1228,7 +1228,7 @@ async def test_async_full_resource_surface(mock_router: respx.Router) -> None:
         return_value=httpx.Response(
             200,
             json=env(
-                {"address": {"addressid": 1, "address1": "1", "city": "C", "state": "NJ", "zip": "07082"}}
+                {"address": {"addressid": "123a45b678c9d012e3f45a67b890c123", "address1": "1", "city": "C", "state": "NJ", "zip": "07082"}}
             ),
         )
     )
@@ -1580,7 +1580,7 @@ async def test_async_full_resource_surface(mock_router: respx.Router) -> None:
         )
         await c.e911.get("2015550123")
         await c.e911.provision(
-            "2015550123", E911ProvisionByIdRequest(callername="x", addressid=1)
+            "2015550123", E911ProvisionByIdRequest(callername="x", addressid="1a2b3c")
         )
         await c.e911.remove("2015550123")
         await c.gateways.list()

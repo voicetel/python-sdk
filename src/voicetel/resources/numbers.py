@@ -9,6 +9,8 @@ from ..models import (
     NumberCnamData,
     NumberCnamRequest,
     NumberDetail,
+    DirectoryListingData,
+    DirectoryListingRequest,
     NumberFaxData,
     NumberFaxRequest,
     NumberForwardData,
@@ -105,6 +107,40 @@ class NumbersResource(Resource):
             unwrap(
                 self._t.request(
                     "PUT", f"/v2.2/numbers/{quote_path(number)}/lidb", json=body.to_payload()
+                )
+            )
+        )
+
+    def get_directory_listing(self, number: str) -> DirectoryListingData:
+        """GET /v2.2/numbers/{number}/directory-listing — 411 listing state as published."""
+        return DirectoryListingData.model_validate(
+            unwrap(
+                self._t.request("GET", f"/v2.2/numbers/{quote_path(number)}/directory-listing")
+            )
+        )
+
+    def set_directory_listing(
+        self, number: str, body: DirectoryListingRequest
+    ) -> DirectoryListingData:
+        """PUT /v2.2/numbers/{number}/directory-listing — add or replace (202, applied in
+        the background; ``status`` is ``pending``)."""
+        return DirectoryListingData.model_validate(
+            unwrap(
+                self._t.request(
+                    "PUT",
+                    f"/v2.2/numbers/{quote_path(number)}/directory-listing",
+                    json=body.to_payload(),
+                )
+            )
+        )
+
+    def remove_directory_listing(self, number: str) -> DirectoryListingData:
+        """DELETE /v2.2/numbers/{number}/directory-listing — remove the listing, or cancel
+        an add not yet applied (202, applied in the background)."""
+        return DirectoryListingData.model_validate(
+            unwrap(
+                self._t.request(
+                    "DELETE", f"/v2.2/numbers/{quote_path(number)}/directory-listing"
                 )
             )
         )
@@ -297,6 +333,37 @@ class NumbersAsyncResource(AsyncResource):
             unwrap(
                 await self._t.request(
                     "PUT", f"/v2.2/numbers/{quote_path(number)}/lidb", json=body.to_payload()
+                )
+            )
+        )
+
+    async def get_directory_listing(self, number: str) -> DirectoryListingData:
+        return DirectoryListingData.model_validate(
+            unwrap(
+                await self._t.request(
+                    "GET", f"/v2.2/numbers/{quote_path(number)}/directory-listing"
+                )
+            )
+        )
+
+    async def set_directory_listing(
+        self, number: str, body: DirectoryListingRequest
+    ) -> DirectoryListingData:
+        return DirectoryListingData.model_validate(
+            unwrap(
+                await self._t.request(
+                    "PUT",
+                    f"/v2.2/numbers/{quote_path(number)}/directory-listing",
+                    json=body.to_payload(),
+                )
+            )
+        )
+
+    async def remove_directory_listing(self, number: str) -> DirectoryListingData:
+        return DirectoryListingData.model_validate(
+            unwrap(
+                await self._t.request(
+                    "DELETE", f"/v2.2/numbers/{quote_path(number)}/directory-listing"
                 )
             )
         )

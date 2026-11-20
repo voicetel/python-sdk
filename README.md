@@ -2,7 +2,7 @@
 
 The official Python client for the [VoiceTel REST API](https://voicetel.com/docs/api/v2.2/) — provision numbers, place orders, validate e911, send messages, and manage your account, all with type-safe, async-ready Python.
 
-![Version](https://img.shields.io/badge/version-2.2.17-blue)
+![Version](https://img.shields.io/badge/version-2.2.20-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)
@@ -27,7 +27,7 @@ The official Python client for the [VoiceTel REST API](https://voicetel.com/docs
 ## ✨ Features
 
 ### 🛡️ Strongly Typed End-to-End
-- **Pydantic v2 models** for every one of the 79 API operations — request bodies validated before they leave your machine, responses validated when they arrive.
+- **Pydantic v2 models** for every one of the 83 API operations — request bodies validated before they leave your machine, responses validated when they arrive.
 - **mypy-strict clean.** Full type coverage, including async, generics, and discriminated unions.
 - **Autocomplete everywhere.** Your IDE knows the shape of every field — no more guessing what's in `result["data"]["numbers"]`.
 
@@ -126,7 +126,7 @@ with Client() as c:
 | `client.e911` | Records, address validation, provisioning | `c.e911.validate(E911AddressRequest(...))` |
 | `client.gateways` | Termination routes | `c.gateways.list()` |
 | `client.inumbering` | Inventory, orders, port-ins | `c.inumbering.search_inventory(tn_mask="201")` |
-| `client.lookups` | CNAM & LRN dips | `c.lookups.lrn("2015550123", ani="2015550100")` |
+| `client.lookups` | CNAM, carrier & line type, LRN dips | `c.lookups.carrier("2015550123")` |
 | `client.messaging` | SMS/MMS, 10DLC brands & campaigns, messaging health | `c.messaging.send(MessageSendRequest(...))` |
 | `client.numbers` | All operations on TNs on the account | `c.numbers.assign_campaign("2015550123", ...)` |
 | `client.support` | Tickets, replies, attachments | `c.support.create(TicketCreateRequest(...))` |

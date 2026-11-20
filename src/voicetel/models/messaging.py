@@ -21,11 +21,21 @@ class MessageSendRequest(_Base):
 
     fromNumber: PhoneNumber = Field(description="Source 10-digit TN on the authenticated account.")
     toNumber: PhoneNumber = Field(description="Destination 10-digit TN.")
-    text: str = Field(description="Message body (UTF-8).")
-    subject: str | None = Field(default=None, description="MMS subject line (MMS only).")
+    text: str | None = Field(
+        default=None,
+        description="Message body (UTF-8). Required for SMS; optional for MMS, where it "
+        "may be at most 2048 characters.",
+    )
+    subject: str | None = Field(
+        default=None,
+        description="Deprecated. Accepted for compatibility but not delivered on most "
+        "messaging routes; do not use.",
+    )
     mediaUrls: list[str] | None = Field(
         default=None,
-        description="Public media URLs; presence makes this an MMS.",
+        min_length=1,
+        description="Publicly reachable http(s) URLs of the media to send; presence makes "
+        "this an MMS.",
     )
 
 
@@ -68,23 +78,55 @@ class MessageRecordValue(_Base):
     """Per-record fields inside :class:`MessageRecord`. Shape varies by ``type``.
 
     For ``sms``/``mms``: ``number`` (the far-end TN), ``direction``, ``rate`` and
-    ``message`` populated.
-
-    For ``dlr``: ``sourceNumber`` and ``destinationNumber`` populated.
+    ``message`` populated. For ``dlr``: ``sourceNumber``, ``destinationNumber``,
+    ``messageText`` (the receipt as received) and ``transactionGUID`` populated.
     """
 
-    sourceNumber: str | None = None
-    destinationNumber: str | None = None
+    sourceNumber: str | None = Field(
+        default=None, description="Your number that sent the original message (dlr)."
+    )
+    destinationNumber: str | None = Field(
+        default=None, description="Recipient of the original message (dlr)."
+    )
     direction: MessageDirection | None = Field(
         default=None,
-        description="SMS/MMS only.",
+        description="in or out (sms, mms).",
     )
     rate: str | None = Field(
         default=None,
-        description="Billed rate per message (string for precision; SMS/MMS only).",
+        description="Rate charged for the message (sms, mms).",
     )
-    number: str | None = Field(default=None, description="Far-end number (SMS/MMS only).")
-    message: str | None = Field(default=None, description="Message body (SMS/MMS only).")
+    number: str | None = Field(
+        default=None,
+        description="The other party: sender of an inbound message, recipient of an outbound one (sms, mms).",
+    )
+    message: str | None = Field(
+        default=None,
+        description="Message text (sms, mms). May be empty for an MMS that carried only media.",
+    )
+    messageText: str | None = Field(
+        default=None,
+        description="The delivery receipt as received, including its status (dlr).",
+    )
+    transactionGUID: str | None = Field(
+        default=None,
+        description="Id of the message this receipt is for (dlr).",
+    )
+    concatenatedMessage: str | None = Field(
+        default=None,
+        description="Present on some receipts for multi-part messages (dlr).",
+    )
+    attachments: list[dict[str, object]] | None = Field(
+        default=None,
+        description="mms only. Inbound: one object per media file, with contentFile and contentType.",
+    )
+    subject: str | None = Field(
+        default=None, description="Subject, if one was sent or received (mms)."
+    )
+    ip: str | None = Field(
+        default=None,
+        description="Address the send request came from (outbound sms).",
+    )
 
 
 class MessageRecord(_Base):
